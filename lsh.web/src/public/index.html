@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      Custom web template for the Expo export.
+
+      Expo only honours `app/+html.tsx` when `web.output` is "static"; this app
+      is "single" (SPA), and for that mode the override is this file. Expo keeps
+      the markup below as-is and injects the hashed bundle script at the end of
+      the body.
+
+      WARNING: that injection is a naive replace on the FIRST closing body tag
+      in this file. Never write that tag as literal text anywhere above the real
+      one — not even inside a comment — or the script is injected into the
+      comment, never executes, and the app boots to a blank white page.
+
+      It exists so the landing page has a title, description, favicon and Open
+      Graph tags. Previously this was Expo's bare default: search results had no
+      snippet, and sharing littlescholarhub.com in WhatsApp or Facebook produced
+      a bare link with no title card.
+
+      The icons and og-image sit next to this file in `src/public/`, which Expo
+      copies into `dist/` on export.
+    -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <title>Little Scholars Hub — one calm plan for TK–6</title>
+    <meta
+      name="description"
+      content="A 2-minute assessment builds your child's weekly TK–6 plan — reading, math, logic, feelings, manners and art, plus 中文 · भारत · Español culture tracks. Written by real bilingual teachers, not an algorithm."
+    />
+    <meta name="theme-color" content="#b55e48" />
+    <link rel="canonical" href="https://www.littlescholarhub.com/" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Open Graph — WhatsApp, Facebook, LinkedIn, iMessage -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Little Scholars Hub" />
+    <meta property="og:title" content="Little Scholars Hub — one calm plan for TK–6" />
+    <meta
+      property="og:description"
+      content="A 2-minute assessment builds your child's weekly TK–6 plan — reading, math, logic, feelings, manners and art, plus 中文 · भारत · Español culture tracks. Written by real bilingual teachers, not an algorithm."
+    />
+    <meta property="og:url" content="https://www.littlescholarhub.com/" />
+    <meta property="og:image" content="https://www.littlescholarhub.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Little Scholars Hub — one calm plan. Nine subjects. Your family's language."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Little Scholars Hub — one calm plan for TK–6" />
+    <meta
+      name="twitter:description"
+      content="A 2-minute assessment builds your child's weekly TK–6 plan — reading, math, logic, feelings, manners and art, plus 中文 · भारत · Español culture tracks."
+    />
+    <meta name="twitter:image" content="https://www.littlescholarhub.com/og-image.png" />
+
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

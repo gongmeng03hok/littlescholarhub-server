@@ -1,0 +1,8 @@
+● lsh-api.service - Little Scholar Hub — Python API (Gunicorn)
+     Loaded: loaded (]8;;file://vmi3144153/etc/systemd/system/lsh-api.service/etc/systemd/system/lsh-api.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (auto-restart) (Result: exit-code) since Sat 2026-05-16 23:03:59 CEST; 209ms ago
+    Process: 507926 ExecStart=/var/www/littlescholarhub/lsh.api/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5001 --timeout 120 --access-logfile /var/log/lsh-api-access.log --error-logfile /var/log/lsh-api-error.log wsgi:application [0;1;31m(code=exited, status=1/FAILURE)[0m
+   Main PID: 507926 (code=exited, status=1/FAILURE)
+        CPU: 504ms
+
+May 16 23:03:59 vmi3144153 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mlsh-api.service: Failed with result 'exit-code'.[0m

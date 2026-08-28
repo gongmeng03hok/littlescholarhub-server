@@ -1,0 +1,33 @@
+# https://www.littlescholarhub.com/robots.txt
+# Public pages are crawlable; everything behind a family login is not.
+
+User-agent: *
+Disallow: /api/
+Disallow: /plan
+Disallow: /progress
+Disallow: /settings
+Disallow: /children
+Disallow: /content
+Disallow: /story
+Disallow: /rewards
+Disallow: /assignments
+Disallow: /weekly-packets
+Disallow: /storypacks
+Disallow: /homework
+Disallow: /math
+Disallow: /community
+Disallow: /leaderboard
+Disallow: /customize
+Disallow: /practice/
+Disallow: /kid-select
+Disallow: /gradebook
+Disallow: /students
+Disallow: /config
+Disallow: /users
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Generated art and worksheet PDFs are fine to fetch but not worth crawling.
+Disallow: /art/
+
+Sitemap: https://www.littlescholarhub.com/sitemap.xml
