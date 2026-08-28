@@ -55,6 +55,16 @@ class QuestionGenerator:
          "Spring sleep, not aware of dawn; everywhere I hear birds singing."),
         ("登鹳雀楼","王之涣","白日依山尽，黄河入海流。欲穷千里目，更上一层楼。",
          "The white sun sets behind the mountains; the Yellow River flows into the sea."),
+        ("咏鹅",   "骆宾王", "鹅鹅鹅，曲项向天歌。白毛浮绿水，红掌拨清波。",
+         "Goose, goose, goose - it bends its neck and sings to the sky."),
+        ("悯农",   "李绅",   "锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。",
+         "Hoeing the grain under the noon sun, sweat drips into the soil below."),
+        ("相思",   "王维",   "红豆生南国，春来发几枝。愿君多采撷，此物最相思。",
+         "Red beans grow in the southern land; in spring they put out new branches."),
+        ("江雪",   "柳宗元", "千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。",
+         "A thousand hills, and no bird flies; ten thousand paths, and no footprint."),
+        ("早发白帝城","李白", "朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",
+         "At dawn I left Baidi among the coloured clouds, and reached Jiangling in a day."),
     ]
 
     GITA_TEACHINGS = [
@@ -70,6 +80,26 @@ class QuestionGenerator:
          "Telling the truth right away"),
         ("compassion",  "A classmate is upset about a bad grade. Compassion means:",
          "Listening and offering to help"),
+        ("patience",    "Your little brother keeps asking the same question. Patience means:",
+         "Answering kindly one more time"),
+        ("self-control", "You are furious and want to shout. Self-control means:",
+         "Waiting until you are calm to speak"),
+        ("effort",      "You practise every day but see no progress yet. Effort means:",
+         "Doing the work without demanding the reward"),
+        ("humility",    "You win a prize in front of everyone. Humility means:",
+         "Thanking the people who helped you"),
+        ("fairness",    "You are dividing sweets among friends. Fairness means:",
+         "Giving each person their proper share"),
+        ("gratitude",   "Someone cooked a meal you did not much like. Gratitude means:",
+         "Thanking them for the trouble they took"),
+        ("focus",       "Your phone buzzes while you are studying. Focus means:",
+         "Finishing the task before you look"),
+        ("forgiveness", "A friend apologises for something unkind. Forgiveness means:",
+         "Letting the anger go rather than storing it"),
+        ("truthfulness", "Telling the truth would get you into trouble. Truthfulness means:",
+         "Saying what happened anyway"),
+        ("service",     "Nobody notices the classroom needs tidying. Service means:",
+         "Doing it without being asked"),
     ]
 
     SPANISH_VOCABULARY = [
@@ -439,7 +469,10 @@ class QuestionGenerator:
 
     @classmethod
     def reading_comprehension(cls, grade: int, theme: str = "") -> dict:
-        passages = [
+        # Banded. The early passages ask what the text says; the later ones ask
+        # what it means and why the writer said it that way, which is the
+        # actual comprehension ladder.
+        early = [
             ("The sun rises in the east every morning. It gives us light and warmth.",
              "What does the sun give us?", "Light and warmth"),
             ("Bears hibernate in winter. They sleep to save energy when food is scarce.",
@@ -447,7 +480,56 @@ class QuestionGenerator:
             ("The water cycle has three steps: evaporation, condensation, and precipitation.",
              "What are the three steps of the water cycle?",
              "Evaporation, condensation, and precipitation"),
+            ("Bees carry pollen from flower to flower. This helps new plants grow.",
+             "How do bees help plants?", "They carry pollen between flowers"),
+            ("Owls hunt at night. Their large eyes let in as much light as possible.",
+             "Why do owls have large eyes?", "To see in the dark"),
+            ("Ice is water that has frozen solid. It melts back into water when it warms.",
+             "What happens to ice when it warms?", "It melts back into water"),
         ]
+        middle = [
+            ("Deserts get very little rain, but they are far from empty. Cactus plants store "
+             "water in thick stems, and many animals come out only after dark.",
+             "Why do desert animals come out at night?",
+             "It is cooler and they lose less water"),
+            ("Paper was invented in China around two thousand years ago. Before that, people "
+             "wrote on silk, which was costly, or on strips of bamboo, which were heavy.",
+             "Why was paper an improvement on bamboo?",
+             "It was much lighter to carry"),
+            ("A volcano erupts when melted rock beneath the surface finds a weak point and "
+             "pushes upward. The rock is called magma below ground and lava above it.",
+             "What is magma called once it reaches the surface?", "Lava"),
+            ("Migrating birds often fly in a V shape. Each bird catches the moving air from "
+             "the one ahead, so the whole flock uses less energy than any bird flying alone.",
+             "Why do birds fly in a V?", "The shape saves the flock energy"),
+        ]
+        upper = [
+            ("The library was quiet except for the radiator, which knocked twice and then "
+             "gave up. Maya read the same paragraph four times and understood none of it.",
+             "What does this suggest about Maya?", "She is distracted, not that the text is hard"),
+            ("Some argue that homework builds discipline. Others reply that it mostly measures "
+             "how much help a child can get at home, which is not the same as effort.",
+             "What is the second argument really objecting to?",
+             "That homework may measure advantage rather than effort"),
+            ("The glacier has retreated four kilometres since the first survey in 1912. The "
+             "valley it left behind is now colonised by grasses and, lately, by young birch.",
+             "What does the passage suggest about the valley?",
+             "Life moves in once the ice withdraws"),
+            ("The advertisement showed a family laughing over a bowl of cereal. It said nothing "
+             "about sugar, and the smallest print carried the only number on the page.",
+             "Why does the writer mention the smallest print?",
+             "To suggest the advertisement hides unflattering facts"),
+            ("Rivers rarely run straight. Water moving fastest on the outside of a bend wears "
+             "the bank away, while the slower inside edge drops the sand it can no longer carry.",
+             "Why does a bend in a river grow more curved over time?",
+             "The outside erodes while the inside builds up"),
+        ]
+        if grade <= 2:
+            passages = early
+        elif grade <= 4:
+            passages = early[:2] + middle
+        else:
+            passages = middle[:2] + upper
         th = cls._theme(theme)
         if th:
             passages = [cls.THEME_PASSAGE[th]] + passages
@@ -467,11 +549,25 @@ class QuestionGenerator:
 
     @classmethod
     def pinyin_tone(cls, grade: int, theme: str = "") -> dict:
-        syllables = [
-            ("mā","1st — flat/high"),("má","2nd — rising"),
-            ("mǎ","3rd — dip/low"),  ("mà","4th — falling"),
-            ("bō","1st — flat"),     ("bó","2nd — rising"),
+        # Banded: a TK child hears the four tones on one familiar syllable;
+        # older children meet more finals and more contrast.
+        early = [
+            ("mā", "1st — flat/high"), ("má", "2nd — rising"),
+            ("mǎ", "3rd — dip/low"),   ("mà", "4th — falling"),
+            ("bā", "1st — flat/high"), ("bá", "2nd — rising"),
+            ("bǎ", "3rd — dip/low"),   ("bà", "4th — falling"),
         ]
+        later = [
+            ("hāo", "1st — flat/high"), ("háo", "2nd — rising"),
+            ("hǎo", "3rd — dip/low"),   ("hào", "4th — falling"),
+            ("shū", "1st — flat/high"), ("shú", "2nd — rising"),
+            ("shǔ", "3rd — dip/low"),  ("shù", "4th — falling"),
+            ("qī", "1st — flat/high"), ("qí", "2nd — rising"),
+            ("qǐ", "3rd — dip/low"),   ("qì", "4th — falling"),
+            ("xiāng", "1st — flat/high"), ("xiáng", "2nd — rising"),
+            ("xiǎng", "3rd — dip/low"),   ("xiàng", "4th — falling"),
+        ]
+        syllables = early if grade <= 1 else early + later
         syl, ans = random.choice(syllables)
         opts = list({ans} | {s[1] for s in random.sample(syllables, 3)})
         random.shuffle(opts)
@@ -480,11 +576,29 @@ class QuestionGenerator:
 
     @classmethod
     def hanzi_meaning(cls, grade: int, theme: str = "") -> dict:
-        chars = [
+        # Banded roughly the way a Chinese primary reader introduces them:
+        # numbers and pictographs first, then position and family, then verbs
+        # and colours, then two-character words.
+        early = [
             ("一","one"),("二","two"),("三","three"),("四","four"),("五","five"),
+            ("六","six"),("七","seven"),("八","eight"),("九","nine"),("十","ten"),
             ("山","mountain"),("水","water"),("火","fire"),("木","wood"),("日","sun"),
-            ("人","person"),("口","mouth"),("手","hand"),("大","big"),("小","small"),
+            ("月","moon"),("人","person"),("口","mouth"),("手","hand"),("大","big"),
+            ("小","small"),
         ]
+        mid = [
+            ("上","up"),("下","down"),("中","middle"),("天","sky"),("女","woman"),
+            ("子","child"),("目","eye"),("心","heart"),("田","field"),("石","stone"),
+            ("白","white"),("红","red"),("黄","yellow"),("蓝","blue"),("绿","green"),
+            ("黑","black"),
+        ]
+        upper = [
+            ("看","to look"),("听","to listen"),("说","to speak"),("走","to walk"),
+            ("吃","to eat"),("喝","to drink"),("学","to study"),("写","to write"),
+            ("朋友","friend"),("老师","teacher"),("学校","school"),("今天","today"),
+            ("明天","tomorrow"),("谢谢","thank you"),("你好","hello"),
+        ]
+        chars = early if grade <= 1 else (early + mid if grade <= 3 else early + mid + upper)
         char, ans = random.choice(chars)
         distractors = random.sample([m for _, m in chars if m != ans], 3)
         opts = [ans] + distractors
@@ -531,8 +645,27 @@ class QuestionGenerator:
 
     @classmethod
     def spanish_vocab(cls, grade: int, theme: str = "") -> dict:
-        word, meaning = random.choice(cls.SPANISH_VOCABULARY)
-        distractors = random.sample([m for _, m in cls.SPANISH_VOCABULARY if m != meaning], 3)
+        extra_mid = [
+            ("la escuela","the school"),("el maestro","the teacher"),
+            ("el amigo","the friend"),("la familia","the family"),
+            ("el agua","the water"),("el pan","the bread"),
+            ("la leche","the milk"),("la manzana","the apple"),
+            ("el perro","the dog"),("el gato","the cat"),
+            ("la casa","the house"),("el libro","the book"),
+        ]
+        extra_upper = [
+            ("aprender","to learn"),("escribir","to write"),("leer","to read"),
+            ("caminar","to walk"),("escuchar","to listen"),("ayudar","to help"),
+            ("siempre","always"),("nunca","never"),("porque","because"),
+            ("aunque","although"),("entonces","then"),("todavía","still"),
+        ]
+        bank = list(cls.SPANISH_VOCABULARY)
+        if grade >= 2:
+            bank += extra_mid
+        if grade >= 4:
+            bank += extra_upper
+        word, meaning = random.choice(bank)
+        distractors = random.sample([m for _, m in bank if m != meaning], 3)
         opts = [meaning] + distractors
         random.shuffle(opts)
         return {"question": f"What does the Spanish word '{word}' mean in English?",
@@ -541,15 +674,30 @@ class QuestionGenerator:
     @classmethod
     def hispanic_festival(cls, grade: int, theme: str = "") -> dict:
         festivals = [
-            ("Día de los Muertos", "November 1-2", "honor ancestors"),
-            ("Las Posadas",        "December 16-24","re-enact Mary & Joseph's journey"),
-            ("Cinco de Mayo",      "May 5",          "celebrate a Mexican battle victory"),
+            ("Día de los Muertos", "November 1-2",  "honour ancestors who have died"),
+            ("Las Posadas",        "December 16-24", "re-enact Mary and Joseph's journey"),
+            ("Cinco de Mayo",      "May 5",          "remember the Battle of Puebla"),
             ("Three Kings Day",    "January 6",      "celebrate the Three Wise Men"),
+            ("Día de la Independencia", "September 16", "mark Mexico's independence"),
+            ("Carnaval",           "the week before Lent", "parade in costume before Lent"),
+            ("Semana Santa",       "the week before Easter", "walk in Holy Week processions"),
+            ("Las Fallas",         "March 15-19",    "burn giant sculptures in Valencia"),
+            ("La Tomatina",        "last Wednesday in August", "throw tomatoes in Buñol"),
+            ("Inti Raymi",         "June 24",        "greet the Inca sun festival in Cusco"),
+            ("Feria de Abril",     "April",          "dance sevillanas in Seville"),
+            ("Nochevieja",         "December 31",    "eat twelve grapes at midnight"),
+            ("Quinceañera",        "a girl's 15th birthday", "mark growing up at fifteen"),
+            ("Día del Niño",       "April 30",       "celebrate children"),
         ]
+        # Younger children get the handful they are most likely to have met.
+        if grade <= 1:
+            festivals = festivals[:6]
         fest, date_, meaning = random.choice(festivals)
         return {"question": f"What is the purpose of '{fest}'?",
                 "answer": f"To {meaning}",
-                "options": [f"To {f[2]}" for f in festivals],
+                "options": [f"To {f[2]}" for f in
+                            [(fest, date_, meaning)] + random.sample(
+                                [x for x in festivals if x[0] != fest], 3)],
                 "hint": f"'{fest}' is celebrated on {date_}."}
 
 
@@ -934,6 +1082,26 @@ class QuestionGenerator:
          "it often uses rhythm and rhyme", "it usually has a plot and characters"),
         ("an owl", "a bat", "it can fly and hunts at night",
          "it is a bird with feathers", "it is a mammal with fur"),
+        ("a lake", "a river", "it is fresh water",
+         "it stays in one place", "it flows towards the sea"),
+        ("a diary", "a newspaper", "it is written down and dated",
+         "it records one person's private thoughts", "it reports events for many readers"),
+        ("a seed", "an egg", "a new living thing grows from it",
+         "it grows into a plant", "it grows into an animal"),
+        ("a camel", "a polar bear", "it survives an extreme climate",
+         "it stores fat in a hump for the desert", "it has thick fur for the cold"),
+        ("a map", "a photograph", "it shows you a place",
+         "it uses symbols and a scale", "it captures one moment as it looked"),
+        ("a democracy", "a monarchy", "it is a way of governing a country",
+         "leaders are chosen by voting", "a ruler inherits the position"),
+        ("a fact", "an opinion", "it can appear in a piece of writing",
+         "it can be checked and proved", "it expresses what someone believes"),
+        ("a spider", "an insect", "it is a small animal with many legs",
+         "it has eight legs and no antennae", "it has six legs and antennae"),
+        ("thunder", "lightning", "it happens during a storm",
+         "it is the sound you hear", "it is the flash you see"),
+        ("a novel", "a biography", "it is a long book about a person's life",
+         "the person and events are invented", "the person really lived"),
     ]
 
     #: Two-sentence passages for children who are listening, not yet reading.
