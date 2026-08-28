@@ -552,49 +552,229 @@ class QuestionGenerator:
                 "options": [f"To {f[2]}" for f in festivals],
                 "hint": f"'{fest}' is celebrated on {date_}."}
 
+
+    # ── Social-emotional banks, banded by age ───────────────────────────────
+    #: (scenario, feeling, place_ok)
+    FEELINGS_EARLY = [
+        ("Your best friend moves to another city. How do you feel?", "sad", True),
+        ("You get to open a present. How do you feel?", "excited", True),
+        ("A big dog barks loudly right next to you. How do you feel?", "scared", True),
+        ("You finish a puzzle all by yourself. How do you feel?", "proud", True),
+        ("Someone takes your toy without asking. How do you feel?", "angry", True),
+        ("You cannot find your shoes and you are late. How do you feel?", "worried", True),
+        ("Your grandma gives you a big hug. How do you feel?", "loved", True),
+        ("It rains and you cannot go outside to play. How do you feel?", "disappointed", True),
+        ("You are the last one picked for a team. How do you feel?", "left out", True),
+        ("You wake up on your birthday. How do you feel?", "happy", True),
+        ("You spill juice all over the floor. How do you feel?", "embarrassed", True),
+        ("You have nothing to do for a long time. How do you feel?", "bored", True),
+    ]
+
+    FEELINGS_MID = [
+        ("You studied hard but still got a question wrong. How do you feel?", "frustrated", True),
+        ("Your friend is chosen for something you wanted. How do you feel?", "jealous", True),
+        ("You told a small lie and nobody found out. How do you feel?", "guilty", True),
+        ("You are about to read out loud to the whole class. How do you feel?", "nervous", True),
+        ("You helped someone who was struggling. How do you feel?", "proud", True),
+        ("Your friend did not invite you to their party. How do you feel?", "hurt", True),
+        ("You finally learn something that was hard for weeks. How do you feel?", "relieved", True),
+        ("Someone breaks a promise they made to you. How do you feel?", "let down", True),
+        ("You are meeting a whole class of new people. How do you feel?", "shy", True),
+        ("You see someone being treated unfairly. How do you feel?", "angry", True),
+    ]
+
+    FEELINGS_UPPER = [
+        ("You are happy to move to a new school but sad to leave your friends. What is that called?",
+         "mixed feelings", True),
+        ("Your friend snaps at you, then says they had a terrible day. What were they probably feeling?",
+         "overwhelmed", True),
+        ("You keep checking your work over and over before handing it in. What are you feeling?",
+         "anxious", True),
+        ("You did well but your friend did not, so you keep your good news quiet. What is that?",
+         "being considerate", True),
+        ("You feel low for days and cannot say why. What is the useful next step?",
+         "tell someone you trust", True),
+        ("A friend keeps interrupting you. Instead of shouting, what helps most?",
+         "say calmly how it makes you feel", True),
+        ("You are furious. What can you do BEFORE you speak?",
+         "take a breath and wait", True),
+        ("Someone apologises properly and means it. What can you choose to do?",
+         "forgive them", True),
+    ]
+
+    FEELING_WORDS = [
+        "sad", "excited", "scared", "proud", "angry", "worried", "loved",
+        "disappointed", "left out", "happy", "embarrassed", "bored",
+        "frustrated", "jealous", "guilty", "nervous", "hurt", "relieved",
+        "let down", "shy", "mixed feelings", "overwhelmed", "anxious",
+    ]
+
+    #: (scenario, right answer, three wrong answers, place_ok)
+    MANNERS_EARLY = [
+        ("Someone sneezes near you. What do you say?", "Bless you!",
+         ["Nothing at all", "That was loud", "Go away"], True),
+        ("You want the bread at the table. What do you say?", "Please pass the bread",
+         ["Give me that", "I want bread now", "Grab it yourself"], False),
+        ("You finish eating dinner. What do you say to the cook?", "Thank you for the meal",
+         ["I am still hungry", "That took ages", "Nothing"], False),
+        ("You bump into someone by accident. What do you say?", "I'm sorry, excuse me",
+         ["Watch where you go", "Nothing", "That was your fault"], True),
+        ("Someone gives you a present you already own. What do you say?", "Thank you so much",
+         ["I have this already", "I wanted something else", "Nothing"], True),
+        ("You want to get past someone in a doorway. What do you say?", "Excuse me, please",
+         ["Move!", "Push past quietly", "Nothing"], True),
+        ("A visitor arrives at your home. What do you do?", "Say hello and welcome them",
+         ["Keep watching your show", "Hide in your room", "Ask them to leave"], True),
+        ("Your friend shows you their drawing. What is kind to say?", "I like the colours you chose",
+         ["Mine is better", "That looks wrong", "Nothing"], True),
+        ("You need to cough. What do you do?", "Cover your mouth with your elbow",
+         ["Cough on your friend", "Cough on the food", "Nothing"], True),
+        ("Someone holds a door open for you. What do you say?", "Thank you",
+         ["Nothing", "About time", "Move faster"], True),
+    ]
+
+    MANNERS_MID = [
+        ("You want to interrupt someone talking. What should you do?",
+         "Wait for a pause and say 'Excuse me'",
+         ["Talk over them", "Tap them until they stop", "Walk away"], True),
+        ("A new child is standing alone at break. What do you do?",
+         "Invite them to join in",
+         ["Ignore them", "Point at them", "Tell others to stay away"], True),
+        ("You are a guest and are served food you dislike. What do you do?",
+         "Try a little and say thank you",
+         ["Say it looks horrible", "Push the plate away", "Leave the table"], False),
+        ("Your friend is telling a long story. What shows you are listening?",
+         "Look at them and ask a question",
+         ["Check your watch", "Finish their sentences", "Start your own story"], True),
+        ("You borrowed something and broke it. What do you do?",
+         "Tell them honestly and offer to replace it",
+         ["Return it quietly", "Blame someone else", "Keep it"], True),
+        ("You disagree with a friend's idea. How do you say so?",
+         "I see it differently, can I explain?",
+         ["That's stupid", "You're wrong", "Say nothing and sulk"], True),
+        ("You are on a bus and an elderly person is standing. What do you do?",
+         "Offer them your seat",
+         ["Pretend not to notice", "Move to another seat", "Look at your phone"], True),
+        ("You win a game against a friend. What do you say?",
+         "Good game, that was close",
+         ["I always win", "You are terrible", "Again, and I'll win again"], True),
+        ("You lose a game. What do you say?",
+         "Well played, congratulations",
+         ["You cheated", "That game is unfair", "I wasn't trying"], True),
+    ]
+
+    MANNERS_UPPER = [
+        ("A classmate is being teased in a group chat. What is the right thing to do?",
+         "Speak up or tell an adult you trust",
+         ["Join in so you fit in", "Screenshot it and share", "Say nothing and scroll on"], True),
+        ("You said something that hurt someone. What is a real apology?",
+         "Name what you did and change it",
+         ["Say 'sorry you feel that way'", "Explain why they overreacted", "Wait for it to blow over"], True),
+        ("You are given credit for work a classmate did. What do you do?",
+         "Say clearly that it was their work",
+         ["Accept the praise", "Say nothing", "Offer to share next time"], True),
+        ("Someone holds an opinion you strongly disagree with. What is respectful?",
+         "Ask why they think that, then explain your view",
+         ["Mock the idea", "Repeat yourself louder", "Refuse to talk to them"], True),
+        ("You are running late to meet someone. What is the courteous thing?",
+         "Message them as soon as you know",
+         ["Arrive and explain later", "Say nothing", "Blame the traffic afterwards"], True),
+        ("A friend tells you something private. What do you do?",
+         "Keep it to yourself",
+         ["Tell one other person", "Hint about it publicly", "Ask if you can share it later"], True),
+        ("You are eating with a family whose customs differ from yours. What do you do?",
+         "Watch, follow their lead, and ask politely",
+         ["Do it your own way", "Say their way is strange", "Refuse to eat"], True),
+        ("Someone thanks you for something small. What is a gracious reply?",
+         "You're welcome, happy to help",
+         ["It was nothing, obviously", "You owe me", "Finally"], True),
+    ]
+
+    @classmethod
+    def _sel_band(cls, grade, early, mid, upper):
+        """grade here is a school year (K=0, 1st=1 .. 6th=6)."""
+        if grade <= 1:
+            return early
+        if grade <= 3:
+            return early[:4] + mid
+        return mid[:3] + upper
+
     # ── Social-Emotional ─────────────────────────────────────────────────────
 
     @classmethod
     def feelings_recognition(cls, grade: int, theme: str = "") -> dict:
         th = cls._theme(theme)
-        pool = [f for f in cls.FEELINGS if f[3]] if th else cls.FEELINGS
-        _, scenario, ans, _ok = random.choice(pool)
+        bank = cls._sel_band(grade, cls.FEELINGS_EARLY, cls.FEELINGS_MID, cls.FEELINGS_UPPER)
+        pool = [f for f in bank if f[2]] if th else bank
+        scenario, ans, _ok = random.choice(pool or bank)
         if th:
             scenario = "%s, %s" % (cls.THEME_PLACE[th].capitalize(),
                                    scenario[0].lower() + scenario[1:])
-        opts = [f[2] for f in cls.FEELINGS]
+        distract = [w for w in cls.FEELING_WORDS if w != ans]
+        opts = [ans] + random.sample(distract, 3)
         random.shuffle(opts)
-        return {"question": scenario, "answer": ans, "options": opts[:4],
+        return {"question": scenario, "answer": ans, "options": opts,
                 "hint": "How would YOU feel in this situation?"}
 
     @classmethod
-    def manners_scenario(cls, grade: int, theme: str = "") -> dict:
-        # place_ok marks a scenario that still makes sense once a setting is
-        # prefixed. "You finish eating dinner … the cook" does not — prefixing
-        # every scenario produced "At the aquarium, you finish eating dinner".
-        scenarios = [
-            ("Someone sneezes near you. What do you say?", "Bless you!", True),
-            ("You want to interrupt someone talking. What should you do?",
-             "Wait for a pause and say 'Excuse me'", True),
-            ("You finish eating dinner. What do you say to the cook?",
-             "Thank you for the meal", False),
-            ("You bump into someone by accident. What do you say?",
-             "I'm sorry / Excuse me", True),
+    def feelings_response(cls, grade: int, theme: str = "") -> dict:
+        """Naming a feeling is the first half; knowing what helps is the rest."""
+        bank = cls._sel_band(grade, cls.FEELINGS_EARLY, cls.FEELINGS_MID, cls.FEELINGS_UPPER)
+        scenario, feeling, _ok = random.choice(bank)
+        helps = [
+            ("tell someone you trust how you feel", True),
+            ("take a few slow breaths first", True),
+            ("ask for help", True),
+            ("keep it to yourself and say nothing", False),
+            ("pretend you do not care", False),
+            ("shout until someone listens", False),
+            ("blame someone else", False),
         ]
-        th = cls._theme(theme)
-        pool = [s for s in scenarios if s[2]] if th else scenarios
-        q, ans, _ok = random.choice(pool)
-        if th:
-            q = "%s, %s" % (cls.THEME_PLACE[th].capitalize(), q[0].lower() + q[1:])
-        # Distractors come from the full set, not just the place-safe subset,
-        # so a themed question still offers four plausible replies.
-        opts = [ans] + [a for _q, a, _p in scenarios if a != ans]
+        good = random.choice([h for h in helps if h[1]])[0]
+        bad = random.sample([h[0] for h in helps if not h[1]], 3)
+        opts = [good] + bad
         random.shuffle(opts)
-        return {"question": q, "answer": ans, "options": opts[:4],
-                "hint": "Think: what would be kind?"}
+        return {
+            "question": "%s  What could HELP?" % scenario,
+            "answer": good, "options": opts,
+            "hint": "Feelings get smaller when they are shared, not hidden.",
+        }
+
+    @classmethod
+    def manners_scenario(cls, grade: int, theme: str = "") -> dict:
+        """What do you say / do. Scenarios are banded by age: 'bless you' for a
+        TK child, group-chat bystanding for a 6th grader.
+
+        place_ok marks a scenario that still makes sense once a setting is
+        prefixed. "You finish eating dinner ... the cook" does not - prefixing
+        every scenario produced "At the aquarium, you finish eating dinner".
+        """
+        th = cls._theme(theme)
+        bank = cls._sel_band(grade, cls.MANNERS_EARLY, cls.MANNERS_MID, cls.MANNERS_UPPER)
+        pool = [x for x in bank if x[3]] if th else bank
+        scenario, ans, wrong, _ok = random.choice(pool or bank)
+        if th:
+            scenario = "%s, %s" % (cls.THEME_PLACE[th].capitalize(),
+                                   scenario[0].lower() + scenario[1:])
+        opts = [ans] + list(wrong[:3])
+        random.shuffle(opts)
+        return {"question": scenario, "answer": ans, "options": opts,
+                "hint": "Think about how the other person would feel."}
+
+    @classmethod
+    def manners_reason(cls, grade: int, theme: str = "") -> dict:
+        """Why it is the kind thing - moves from doing to understanding."""
+        bank = cls._sel_band(grade, cls.MANNERS_EARLY, cls.MANNERS_MID, cls.MANNERS_UPPER)
+        scenario, ans, wrong, _ok = random.choice(bank)
+        opts = [ans] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": "%s  Which choice is the kind one?" % scenario,
+            "answer": ans, "options": opts,
+            "hint": "The kind choice is usually the one that considers the other person first.",
+        }
 
 
-    # ── Early literacy: beginning sounds, rhyme, syllables, digraphs ─────────
     #: word -> initial phoneme. Kept deliberately small and concrete so a TK
     #: child meets words they can picture.
     BEGINNING_SOUNDS = {
@@ -609,7 +789,6 @@ class QuestionGenerator:
         "r": ["rat", "run", "red", "rug", "rain"],
         "l": ["leg", "log", "lip", "lion", "leaf"],
     }
-
     RHYME_FAMILIES = [
         ("cat", ["hat", "bat", "mat", "rat"]),
         ("dog", ["log", "fog", "hog", "jog"]),
@@ -622,7 +801,6 @@ class QuestionGenerator:
         ("star", ["car", "far", "jar", "bar"]),
         ("light", ["night", "bright", "kite", "right"]),
     ]
-
     SYLLABLE_WORDS = [
         ("cat", 1), ("dog", 1), ("book", 1), ("hand", 1), ("green", 1),
         ("apple", 2), ("rabbit", 2), ("pencil", 2), ("garden", 2), ("winter", 2),
@@ -630,7 +808,6 @@ class QuestionGenerator:
         ("dinosaur", 3), ("umbrella", 3),
         ("caterpillar", 4), ("watermelon", 4), ("alligator", 4), ("helicopter", 4),
     ]
-
     DIGRAPHS = {
         "sh": ["ship", "shop", "shell", "shark", "shoe"],
         "ch": ["chair", "chin", "cheese", "chick", "chop"],
@@ -996,8 +1173,8 @@ class QuestionGenerator:
         "reading":   [sight_word, reading_comprehension, story_sequence,
                       compare_contrast, listening_comprehension],
         "logic":     [logic_sequence, logic_odd_one_out, logic_pattern_grid],
-        "feelings":  [feelings_recognition],
-        "manners":   [manners_scenario],
+        "feelings":  [feelings_recognition, feelings_response],
+        "manners":   [manners_scenario, manners_reason],
         "pinyin":    [pinyin_tone],
         "hanzi":     [hanzi_meaning],
         "tangshi":   [tang_poem_question],
@@ -1094,6 +1271,8 @@ class QuestionGenerator:
         # social-emotional & cultural
         "feelings_recognition":     0,
         "manners_scenario":         0,
+        "manners_reason":           3,   # 2nd - why, not just what
+        "feelings_response":        1,   # K - what helps, once feelings are named
         "pinyin_tone":              0,
         "hanzi_meaning":            0,
         "spanish_vocab":            0,
