@@ -274,20 +274,28 @@ class QuestionGenerator:
 
     @classmethod
     def math_geometry(cls, grade: int, theme: str = "") -> dict:
+        # Ordered by when the curriculum introduces them. Perimeter of a
+        # rectangle is 3rd grade (CCSS 3.MD.8); area of a rectangle is 3rd-4th;
+        # area of a triangle is 6th (6.G.1). Choosing uniformly meant a 3rd
+        # grader was regularly handed the 6th-grade question.
         shapes = [
-            ("square",   "perimeter", lambda s: 4*s,    lambda s: f"side = {s}"),
-            ("rectangle","perimeter", lambda l,w: 2*(l+w), lambda l,w: f"length={l}, width={w}"),
-            ("triangle", "area",      lambda b,h: b*h//2,  lambda b,h: f"base={b}, height={h}"),
+            ("square",    "perimeter", lambda a, b: 4 * a,        lambda a, b: f"side = {a}"),
+            ("rectangle", "perimeter", lambda a, b: 2 * (a + b),  lambda a, b: f"length={a}, width={b}"),
         ]
+        if grade >= 3:                      # 3rd grade and up
+            shapes.append(
+                ("rectangle", "area", lambda a, b: a * b, lambda a, b: f"length={a}, width={b}"))
+        if grade >= 5:                      # 5th-6th
+            shapes.append(
+                ("triangle", "area", lambda a, b: a * b // 2, lambda a, b: f"base={a}, height={b}"))
+
         shape, measure, fn, params_fn = random.choice(shapes)
-        if shape == "square":
-            s = random.randint(3,12)
-            ans = fn(s)
-            params = params_fn(s)
-        else:
-            a, b = random.randint(3,10), random.randint(3,10)
-            ans = fn(a, b)
-            params = params_fn(a, b)
+        hi = 12 if grade <= 3 else 20       # keep the arithmetic age-appropriate too
+        a, b = random.randint(3, hi), random.randint(3, hi)
+        if shape == "triangle":             # keep the halving exact
+            b = b if (a * b) % 2 == 0 else b + 1
+        ans = fn(a, b)
+        params = params_fn(a, b)
         opts = cls._wrong_opts(int(ans), 3, step=2)
         return {
             "question": f"Find the {measure} of a {shape} with {params}.",
@@ -775,7 +783,16 @@ class QuestionGenerator:
 
     @classmethod
     def shape_basics(cls, grade: int, theme: str = "") -> dict:
-        name, sides, corners, why = random.choice(cls.SHAPES)
+        # A TK child names circles, squares and triangles; pentagons and
+        # hexagons arrive around 2nd. Choosing from the whole list meant
+        # "How many sides does a pentagon have?" was being asked at TK.
+        allowed = {"circle", "square", "triangle"}
+        if grade >= 1:
+            allowed.add("rectangle")
+        if grade >= 2:
+            allowed |= {"pentagon", "hexagon"}
+        pool = [x for x in cls.SHAPES if x[0] in allowed] or cls.SHAPES
+        name, sides, corners, why = random.choice(pool)
         if random.random() < 0.5:
             answer = str(sides)
             opts = list(dict.fromkeys([answer, str(sides + 1), str(max(0, sides - 1)), str(sides + 2)]))
@@ -785,8 +802,16 @@ class QuestionGenerator:
             return {"question": f"How many sides does a {name} have?",
                     "answer": answer, "options": opts[:4],
                     "hint": f"A {name} has {why}."}
-        others = [n for n, _, _, _ in cls.SHAPES if n != name]
-        opts = [name] + random.sample(others, 3)
+        others = [n for n, _, _, _ in pool if n != name] or \
+                 [n for n, _, _, _ in cls.SHAPES if n != name]
+        # At TK the age-appropriate pool is only circle/square/triangle, so there
+        # are fewer than three distractors available — asking for three raised
+        # ValueError and the whole request 500'd.
+        picks = random.sample(others, min(3, len(others)))
+        if len(picks) < 3:
+            spare = [n for n, _, _, _ in cls.SHAPES if n != name and n not in picks]
+            picks += spare[:3 - len(picks)]
+        opts = [name] + picks
         random.shuffle(opts)
         return {"question": f"Which shape has {why}?",
                 "answer": name, "options": opts,
@@ -833,6 +858,126 @@ class QuestionGenerator:
             "hint": "The answer is said out loud in the sentences.",
         }
 
+
+    # ── Upper-grade literacy (4th-6th) ──────────────────────────────────────
+    #: prefix -> (meaning, example base, example whole word)
+    PREFIXES = [
+        ("re",    "again",          "write",  "rewrite"),
+        ("un",    "not",            "happy",  "unhappy"),
+        ("pre",   "before",         "view",   "preview"),
+        ("mis",   "wrongly",        "spell",  "misspell"),
+        ("dis",   "opposite of",    "agree",  "disagree"),
+        ("sub",   "under",          "marine", "submarine"),
+        ("inter", "between",        "national", "international"),
+        ("over",  "too much",       "cook",   "overcook"),
+    ]
+
+    SUFFIXES = [
+        ("less", "without",              "fear",  "fearless"),
+        ("ful",  "full of",              "hope",  "hopeful"),
+        ("able", "able to be",           "read",  "readable"),
+        ("er",   "one who does",         "teach", "teacher"),
+        ("ness", "the state of being",   "kind",  "kindness"),
+        ("ly",   "in that manner",       "quick", "quickly"),
+    ]
+
+    #: (sentence with ___, correct, distractors) — the classic confusions.
+    HOMOPHONES = [
+        ("I ate ___ apples for lunch.", "two", ["to", "too", "tow"]),
+        ("___ going to be late.", "They're", ["Their", "There", "Theirs"]),
+        ("Put the book over ___.", "there", ["their", "they're", "theirs"]),
+        ("The dog wagged ___ tail.", "its", ["it's", "its'", "itis"]),
+        ("Do you know ___ coat this is?", "whose", ["who's", "whos", "whose'"]),
+        ("She walked ___ the door.", "through", ["threw", "thru", "throw"]),
+        ("I could hear the ocean ___.", "roar", ["rower", "rawer", "roer"]),
+        ("The knight rode all ___.", "night", ["knight", "nite", "gnat"]),
+        ("Please ___ your name here.", "write", ["right", "rite", "wright"]),
+        ("The wind ___ the leaves away.", "blew", ["blue", "bleu", "blow"]),
+    ]
+
+    #: (root, meaning, correct word, its meaning, distractors)
+    ROOTS = [
+        ("port",  "to carry",      "export",    "to carry goods out",      ["explore", "expand", "expire"]),
+        ("dict",  "to say",        "predict",   "to say beforehand",       ["produce", "protect", "provide"]),
+        ("scrib", "to write",      "describe",  "to write about",          ["decide", "declare", "deliver"]),
+        ("aud",   "to hear",       "audience",  "people who listen",       ["autumn", "auction", "author"]),
+        ("tele",  "far off",       "telescope", "a tool for seeing far",   ["telephone booth", "tellurium", "telling"]),
+        ("bio",   "life",          "biology",   "the study of life",       ["biography shelf", "bionic arm", "bipod"]),
+        ("geo",   "earth",         "geology",   "the study of the earth",  ["geometry set", "gerbil", "geyser"]),
+        ("struct", "to build",     "construct", "to build something",      ["constrict", "consume", "consult"]),
+    ]
+
+    #: (word, synonym, antonym, extra distractors)
+    SYN_ANT = [
+        ("ancient",  "very old",     "modern",   ["noisy", "gentle"]),
+        ("enormous", "very large",   "tiny",     ["quiet", "damp"]),
+        ("rapid",    "very fast",    "slow",     ["heavy", "kind"]),
+        ("weary",    "very tired",   "energetic", ["clever", "narrow"]),
+        ("brave",    "full of courage", "cowardly", ["sleepy", "sticky"]),
+        ("generous", "willing to give", "selfish", ["frozen", "curved"]),
+        ("scarce",   "hard to find", "plentiful", ["polite", "circular"]),
+    ]
+
+    @classmethod
+    def prefix_suffix(cls, grade: int, theme: str = "") -> dict:
+        if random.random() < 0.5:
+            pre, meaning, base, whole = random.choice(cls.PREFIXES)
+            others = [p for p, _, _, _ in cls.PREFIXES if p != pre]
+            opts = [pre] + random.sample(others, 3)
+            random.shuffle(opts)
+            return {
+                "question": f"Which prefix means \u201c{meaning}\u201d, as in \u201c{whole}\u201d?",
+                "answer": pre, "options": opts,
+                "hint": f"A prefix goes on the front: {pre} + {base} = {whole}.",
+            }
+        suf, meaning, base, whole = random.choice(cls.SUFFIXES)
+        others = [x for x, _, _, _ in cls.SUFFIXES if x != suf]
+        opts = [suf] + random.sample(others, 3)
+        random.shuffle(opts)
+        return {
+            "question": f"Which suffix means \u201c{meaning}\u201d, as in \u201c{whole}\u201d?",
+            "answer": suf, "options": opts,
+            "hint": f"A suffix goes on the end: {base} + {suf} = {whole}.",
+        }
+
+    @classmethod
+    def homophone_choice(cls, grade: int, theme: str = "") -> dict:
+        sentence, correct, wrong = random.choice(cls.HOMOPHONES)
+        opts = [correct] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": f"Choose the right word:  {sentence}",
+            "answer": correct, "options": opts,
+            "hint": "They sound alike \u2014 the spelling depends on the meaning.",
+        }
+
+    @classmethod
+    def root_word(cls, grade: int, theme: str = "") -> dict:
+        root, meaning, word, wmeaning, wrong = random.choice(cls.ROOTS)
+        opts = [word] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": (f"The root \u201c{root}\u201d means \u201c{meaning}\u201d.  "
+                         f"Which word means \u201c{wmeaning}\u201d?"),
+            "answer": word, "options": opts,
+            "hint": f"Look for the root {root} inside the word.",
+        }
+
+    @classmethod
+    def synonym_antonym(cls, grade: int, theme: str = "") -> dict:
+        word, syn, ant, extra = random.choice(cls.SYN_ANT)
+        if random.random() < 0.5:
+            opts = [syn, ant] + list(extra[:2])
+            random.shuffle(opts)
+            return {"question": f"Which phrase means the SAME as \u201c{word}\u201d?",
+                    "answer": syn, "options": opts,
+                    "hint": "A synonym means the same thing."}
+        opts = [ant, syn] + list(extra[:2])
+        random.shuffle(opts)
+        return {"question": f"Which word means the OPPOSITE of \u201c{word}\u201d?",
+                "answer": ant, "options": opts,
+                "hint": "An antonym means the reverse."}
+
     # ── Dispatch table ────────────────────────────────────────────────────────
 
     GENERATORS = {
@@ -845,7 +990,8 @@ class QuestionGenerator:
                       math_factors_primes, math_elapsed_time, skip_counting,
                       shape_basics],
         "phonics":   [phonics_fill_blank, sight_word, beginning_sound,
-                      rhyming_words, syllable_count, digraph_id],
+                      rhyming_words, syllable_count, digraph_id,
+                      prefix_suffix, homophone_choice, root_word, synonym_antonym],
         # sight_word carries the early grades — a TK child cannot read a passage.
         "reading":   [sight_word, reading_comprehension, story_sequence,
                       compare_contrast, listening_comprehension],
@@ -931,6 +1077,10 @@ class QuestionGenerator:
         "rhyming_words":            0,   # TK
         "syllable_count":           1,   # K — needs clapping/segmenting
         "digraph_id":               2,   # 2nd — sh/ch/th are taught after CVC
+        "prefix_suffix":            4,   # 3rd — morphology starts here
+        "homophone_choice":         3,   # 2nd — their/there/they're
+        "synonym_antonym":          3,   # 2nd
+        "root_word":                5,   # 4th — Greek and Latin roots
         "skip_counting":            1,   # K — counting by 2s/5s/10s
         "shape_basics":             0,   # TK — naming shapes, counting sides
         "story_sequence":           0,   # TK — first/next/last, read aloud
@@ -952,6 +1102,27 @@ class QuestionGenerator:
         "gita_teaching":            2,
     }
 
+    #: The upper end of each generator's band. MIN_GRADE_ID alone gave every
+    #: generator a floor and no ceiling, so once one became eligible it stayed
+    #: eligible forever - a 6th grader was still being asked which word rhymes
+    #: with "cat". Anything absent here has no upper limit.
+    MAX_GRADE_ID = {
+        "beginning_sound":          2,   # TK-1st; past initial sounds by 2nd
+        "rhyming_words":            2,   # TK-1st
+        "listening_comprehension":  2,   # TK-1st; older children read for themselves
+        "phonics_fill_blank":       4,   # TK-3rd; the patterns scale (CVC -> kn_ght)
+        "sight_word":               3,   # TK-2nd
+        "shape_basics":             3,   # naming shapes, counting sides
+        "story_sequence":           4,   # TK-3rd
+        "skip_counting":            4,   # K-3rd
+        "logic_pattern_grid":       4,   # shape patterns; older get sequences
+        "math_addition":            4,   # bare sums stop being the point after 3rd
+        "math_subtraction":         4,
+        "syllable_count":           7,   # counting becomes stress/chunking, not babyish
+        "digraph_id":               5,
+        "math_compare_numbers":     5,
+    }
+
     # Through 3rd grade (grade_id 4) every question must be multiple choice —
     # these children cannot yet write their answers.
     EARLY_MAX_GRADE_ID = 4
@@ -968,9 +1139,19 @@ class QuestionGenerator:
         fall back to that subject's gentlest generators — NOT to math, which is
         what made space and art worksheets serve arithmetic.
         """
-        ok = [f for f in fns if cls.MIN_GRADE_ID.get(cls._fn_name(f), 0) <= grade_id]
+        ok = [f for f in fns
+              if cls.MIN_GRADE_ID.get(cls._fn_name(f), 0) <= grade_id
+              <= cls.MAX_GRADE_ID.get(cls._fn_name(f), 7)]
         if ok:
             return ok
+
+        # Capped out of everything (phonics above 4th before the upper-grade
+        # generators existed). Take the ones whose band ENDS nearest this grade
+        # rather than returning nothing — a stale skill beats a blank screen.
+        above = [f for f in fns if cls.MIN_GRADE_ID.get(cls._fn_name(f), 0) <= grade_id]
+        if above:
+            best = max(cls.MAX_GRADE_ID.get(cls._fn_name(f), 7) for f in above)
+            return [f for f in above if cls.MAX_GRADE_ID.get(cls._fn_name(f), 7) == best]
         floor = min(cls.MIN_GRADE_ID.get(cls._fn_name(f), 0) for f in fns)
         return [f for f in fns if cls.MIN_GRADE_ID.get(cls._fn_name(f), 0) == floor]
 

@@ -142,6 +142,46 @@ def c_skill_key_derived():
     return (len(named) > 0), "no worksheet in grade 0 resolved a skill"
 
 
+
+# ── age bands: MIN_GRADE_ID gave every generator a floor and no ceiling, so a
+# ── 6th grader was asked which word rhymes with "cat". These are the specific
+# ── leaks that were live, expressed as things that must NOT come back.
+def c_age_bands():
+    import re as _re
+    forbidden = [
+        ("phonics", 7, r"rhymes with",        "rhyming at 6th"),
+        ("phonics", 7, r"begins with the /",  "beginning sounds at 6th"),
+        ("phonics", 6, r"sight word",         "sight words at 5th"),
+        ("reading", 7, r"^listen:",           "listening comprehension at 6th"),
+        ("reading", 6, r"think about .*what happens", "story sequencing at 5th"),
+        ("math",    4, r"area of a triangle", "triangle area at 3rd"),
+        ("math",    0, r"pentagon|hexagon",   "pentagons at TK"),
+    ]
+    bad = []
+    for subj, grade, pat, label in forbidden:
+        blob = ""
+        for _ in range(4):
+            code, d = get("/api/questions/generate?subject=%s&grade=%d&count=5" % (subj, grade))
+            blob += " ".join((q.get("question") or q.get("question_text") or "")
+                             for q in d.get("questions", [])).lower() + " "
+        if _re.search(pat, blob):
+            bad.append(label)
+    return (not bad), bad
+
+
+def c_no_empty_cells():
+    """Every subject x grade must return questions. Adding ceilings can starve
+    a cell -- capping the early phonics generators left 5th and 6th with
+    nothing until the upper-grade literacy generators existed."""
+    bad = []
+    for subj in ("math", "phonics", "reading", "logic", "feelings", "manners"):
+        for g in range(8):
+            code, d = get("/api/questions/generate?subject=%s&grade=%d&count=5" % (subj, g))
+            if len(d.get("questions", [])) != 5:
+                bad.append("%s/g%d" % (subj, g))
+    return (not bad), bad
+
+
 print("API contract test -> %s" % BASE)
 check("GET /content/worksheets/<id> returns 200 + is_demo + steps", c_detail)
 check("list endpoint exposes is_demo", c_list_is_demo)
@@ -152,6 +192,8 @@ check("daily wisdom: per-language track + artwork", c_wisdom)
 check("story-linked worksheet ships its story", c_story_attached)
 check("worksheet payload carries skill_key", c_skill_key_derived)
 check("all 10 named skills serve their own questions", c_skills)
+check("age bands: no TK material for older children", c_age_bands)
+check("every subject x grade returns questions (48 cells)", c_no_empty_cells)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 if fails:
