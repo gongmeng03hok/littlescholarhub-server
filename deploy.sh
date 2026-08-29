@@ -28,7 +28,7 @@ if [ "$TARGET" = web ] || [ "$TARGET" = all ]; then
   # `expo export` copies src/public/* into dist, but emits no 404.html, and the
   # sitemap's lastmod should track the deploy rather than whenever it was
   # first written.
-  python3 $ROOT/make_seo.py
+  $ROOT/lsh.api/venv/bin/python $ROOT/make_seo.py $ROOT/lsh.web/src/dist
   cp $ROOT/lsh.web/src/public/robots.txt $ROOT/lsh.web/src/public/sitemap.xml $ROOT/lsh.web/src/dist/ 2>/dev/null || true
 
   echo ">> [web] publishing"

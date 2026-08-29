@@ -1323,6 +1323,173 @@ class QuestionGenerator:
                 "answer": ant, "options": opts,
                 "hint": "An antonym means the reverse."}
 
+
+    # ── Puzzles ─────────────────────────────────────────────────────────────
+    @staticmethod
+    def _sudoku_grid(rows: int, cols: int):
+        """A valid completed sudoku for boxes of `rows` x `cols`.
+
+        Built from the standard pattern and then shuffled in ways that preserve
+        validity: rows within a band, whole bands, columns within a stack,
+        whole stacks, and a relabelling of the digits.
+        """
+        n = rows * cols
+
+        def pattern(r, c):
+            return (cols * (r % rows) + r // rows + c) % n
+
+        rand = random.sample
+        row_order = [g * rows + r
+                     for g in rand(range(cols), cols)
+                     for r in rand(range(rows), rows)]
+        col_order = [g * cols + c
+                     for g in rand(range(rows), rows)
+                     for c in rand(range(cols), cols)]
+        nums = rand(range(1, n + 1), n)
+        return [[nums[pattern(r, c)] for c in col_order] for r in row_order]
+
+    @staticmethod
+    def _sudoku_valid(grid, rows: int, cols: int) -> bool:
+        n = rows * cols
+        full = set(range(1, n + 1))
+        if any(set(row) != full for row in grid):
+            return False
+        if any({grid[r][c] for r in range(n)} != full for c in range(n)):
+            return False
+        for br in range(0, n, rows):
+            for bc in range(0, n, cols):
+                box = {grid[br + r][bc + c] for r in range(rows) for c in range(cols)}
+                if box != full:
+                    return False
+        return True
+
+    @classmethod
+    def sudoku_cell(cls, grade: int, theme: str = "") -> dict:
+        """Which number belongs in the marked square.
+
+        A whole grid cannot be typed into a multiple-choice box, so the puzzle
+        is shown complete except for one cell - which is still genuine sudoku
+        reasoning: the answer is forced by its row, column and box.
+        """
+        rows, cols = (2, 2) if grade <= 2 else (2, 3)      # 4x4 for the younger ones
+        n = rows * cols
+        for _ in range(12):
+            grid = cls._sudoku_grid(rows, cols)
+            if cls._sudoku_valid(grid, rows, cols):
+                break
+        else:
+            grid = cls._sudoku_grid(rows, cols)
+
+        hr, hc = random.randrange(n), random.randrange(n)
+        answer = grid[hr][hc]
+
+        lines = []
+        for r in range(n):
+            cells = []
+            for c in range(n):
+                cells.append(" ? " if (r, c) == (hr, hc) else " %d " % grid[r][c])
+                if cols > 1 and c % cols == cols - 1 and c != n - 1:
+                    cells.append("|")
+            lines.append("".join(cells))
+            if r % rows == rows - 1 and r != n - 1:
+                lines.append("-" * len(lines[-1]))
+        board = "\n".join(lines)
+
+        opts = [str(answer)] + [str(x) for x in random.sample(
+            [v for v in range(1, n + 1) if v != answer], 3)]
+        random.shuffle(opts)
+        return {
+            "question": ("Sudoku %d\u00d7%d \u2014 every row, every column and every box "
+                         "uses 1\u2013%d once.\n\n%s\n\nWhich number goes in the ?"
+                         % (n, n, n, board)),
+            "answer": str(answer), "options": opts,
+            "hint": "Look along the row, down the column, then inside the box.",
+        }
+
+    #: (people, items, the word for the item kind)
+    LOGIC_SETS = [
+        (["Mei", "Arjun", "Sofia"], ["a cat", "a dog", "a rabbit"], "pet"),
+        (["Ada", "Leo", "Priya"],   ["red", "blue", "green"],       "favourite colour"),
+        (["Kai", "Nora", "Diego"],  ["a violin", "a drum", "a flute"], "instrument"),
+        (["Yuki", "Omar", "Lena"],  ["apples", "pears", "plums"],   "favourite fruit"),
+        (["Sam", "Hana", "Tomas"],  ["football", "swimming", "chess"], "hobby"),
+    ]
+
+    @classmethod
+    def logic_grid(cls, grade: int, theme: str = "") -> dict:
+        """A three-by-three deduction puzzle with clues that pin it down.
+
+        The clues are brute-forced against all six permutations, and the puzzle
+        is only used when exactly one assignment satisfies them - otherwise the
+        child is asked to deduce something that is not deducible.
+        """
+        import itertools
+        people, items, kind = random.choice(cls.LOGIC_SETS)
+
+        for _ in range(40):
+            truth = dict(zip(people, random.sample(items, 3)))
+            # two negative clues and one positive is usually, but not always,
+            # enough - which is why the result is checked rather than trusted.
+            clues, texts = [], []
+            a, b = random.sample(people, 2)
+            wrong_a = random.choice([i for i in items if i != truth[a]])
+            clues.append(lambda m, a=a, w=wrong_a: m[a] != w)
+            texts.append("%s does not have %s." % (a, wrong_a))
+            wrong_b = random.choice([i for i in items if i != truth[b]])
+            clues.append(lambda m, b=b, w=wrong_b: m[b] != w)
+            texts.append("%s does not have %s." % (b, wrong_b))
+            c = random.choice(people)
+            clues.append(lambda m, c=c, t=truth[c]: m[c] == t)
+            texts.append("%s has %s." % (c, truth[c]))
+
+            solutions = []
+            for perm in itertools.permutations(items):
+                cand = dict(zip(people, perm))
+                if all(fn(cand) for fn in clues):
+                    solutions.append(cand)
+            if len(solutions) == 1:
+                break
+        else:
+            truth = dict(zip(people, random.sample(items, 3)))
+            texts = ["%s has %s." % (p, truth[p]) for p in people[:2]]
+
+        # Never ask about the person a clue names outright - "Kai has a flute"
+        # followed by "which instrument does Kai have?" is not deduction.
+        givens = {t.split(" has ")[0] for t in texts if " has " in t}
+        candidates = [p for p in people if p not in givens] or people
+        asked = random.choice(candidates)
+        answer = truth[asked]
+        opts = list(items)
+        random.shuffle(opts)
+        return {
+            "question": ("Logic grid \u2014 work out who has what.\n\n%s\n\nWhich %s does %s have?"
+                         % ("\n".join("\u2022 " + t for t in texts), kind, asked)),
+            "answer": answer, "options": opts,
+            "hint": "Start with the clue that tells you something for certain.",
+        }
+
+    CIPHER_WORDS = ["CAT", "DOG", "SUN", "BOOK", "STAR", "TREE", "MOON", "FISH",
+                    "BIRD", "RAIN", "LEAF", "SNOW", "CAKE", "SHIP", "GOLD"]
+
+    @classmethod
+    def cipher_decode(cls, grade: int, theme: str = "") -> dict:
+        """A Caesar shift. Small shifts for younger children, and the alphabet
+        wraps, which is the part that catches people out."""
+        word = random.choice(cls.CIPHER_WORDS)
+        shift = random.randint(1, 3) if grade <= 4 else random.randint(1, 7)
+        abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        coded = "".join(abc[(abc.index(ch) + shift) % 26] for ch in word)
+        wrong = random.sample([w for w in cls.CIPHER_WORDS if w != word], 3)
+        opts = [word] + wrong
+        random.shuffle(opts)
+        return {
+            "question": ("Code breaker \u2014 every letter was moved %d place%s forward in the "
+                         "alphabet.\n\nDecode:  %s"
+                         % (shift, "" if shift == 1 else "s", coded)),
+            "answer": word, "options": opts,
+            "hint": "Move each letter %d back. A comes after Z when you wrap around." % shift,
+        }
+
     # ── Dispatch table ────────────────────────────────────────────────────────
 
     GENERATORS = {
@@ -1340,7 +1507,8 @@ class QuestionGenerator:
         # sight_word carries the early grades — a TK child cannot read a passage.
         "reading":   [sight_word, reading_comprehension, story_sequence,
                       compare_contrast, listening_comprehension],
-        "logic":     [logic_sequence, logic_odd_one_out, logic_pattern_grid],
+        "logic":     [logic_sequence, logic_odd_one_out, logic_pattern_grid,
+                      sudoku_cell, logic_grid, cipher_decode],
         "feelings":  [feelings_recognition, feelings_response],
         "manners":   [manners_scenario, manners_reason],
         "pinyin":    [pinyin_tone],
@@ -1380,6 +1548,9 @@ class QuestionGenerator:
         "factors_primes":    "math_factors_primes",
         "order_of_ops":      "math_order_of_operations",
         "patterns":          "logic_pattern_grid",
+        "sudoku":            "sudoku_cell",
+        "logic_grid":        "logic_grid",
+        "cipher":            "cipher_decode",
         "odd_one_out":       "logic_odd_one_out",
         "sequences":         ["story_sequence", "logic_sequence"],
         "comprehension":     ["reading_comprehension", "listening_comprehension"],
@@ -1436,6 +1607,9 @@ class QuestionGenerator:
         "logic_pattern_grid":       0,   # shapes, no reading
         "logic_odd_one_out":        1,
         "logic_sequence":           2,   # number sequences
+        "sudoku_cell":              2,   # 1st - 4x4 first, 6x6 from 2nd
+        "logic_grid":               3,   # 2nd - holding three facts at once
+        "cipher_decode":            3,   # 2nd - needs the alphabet secure
         # social-emotional & cultural
         "feelings_recognition":     0,
         "manners_scenario":         0,
