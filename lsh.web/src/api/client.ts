@@ -3,6 +3,8 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "https://www.littlescholarhub.com/api";
+/** Exported for utils/track.ts, which posts telemetry outside axios. */
+export const API_BASE = BASE_URL;
 //const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:5000/api";
 
 export const TOKEN_KEY = "lsh_token";

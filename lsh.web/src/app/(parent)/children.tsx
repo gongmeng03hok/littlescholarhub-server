@@ -2,6 +2,7 @@
  * Children management — add, edit grade, set kid profile PIN/avatar, delete.
  * Accessible from Settings and Dashboard.
  */
+import { track } from "../../utils/track";
 import { useState } from "react";
 import {
   ScrollView, View, Text, TouchableOpacity,
@@ -80,6 +81,7 @@ export default function ChildrenScreen() {
       { nickname: nickname.trim(), grade_id: gradeId },
       {
         onSuccess: (res: any) => {
+          track("child_added");
           // The guest assessment could not be saved before the child existed —
           // re-submit it now so the plan the parent was shown is the plan they get.
           const pending = readPendingAssessment();

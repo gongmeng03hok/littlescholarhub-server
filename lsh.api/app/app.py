@@ -26,6 +26,7 @@ from routes.homework        import homework_bp
 from routes.community       import community_bp
 from routes.gamification    import gamification_bp
 from routes.rewards         import rewards_bp
+from routes.events          import events_bp
 
 from utils.db               import close_db
 from utils.errors           import register_error_handlers
@@ -59,6 +60,7 @@ def create_app():
     app.register_blueprint(children_bp,        url_prefix="/api/children")
     app.register_blueprint(assessment_bp,      url_prefix="/api/assessment")
     app.register_blueprint(questions_bp,       url_prefix="/api/questions")
+    app.register_blueprint(events_bp,          url_prefix="/api/events")
     app.register_blueprint(content_bp,         url_prefix="/api/content")
     app.register_blueprint(progress_bp,        url_prefix="/api/progress")
     app.register_blueprint(admin_bp,           url_prefix="/api/admin")

@@ -5,6 +5,7 @@
  * (matching venerable-gnome-807695.netlify.app/#assessment).
  * On success: 3 activity previews + "Create account to save" CTA.
  */
+import { track, useTrackView } from "../../utils/track";
 import { useState, useRef } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
@@ -27,6 +28,7 @@ function toOpt(o: any): Opt {
 }
 
 export default function PublicAssessmentScreen() {
+  useTrackView("assessment_start");
   const router = useRouter();
 
   const [step,       setStep]       = useState(0);
@@ -45,6 +47,7 @@ export default function PublicAssessmentScreen() {
     onSuccess:  (data) => {
       // Keep the answers so the plan can be rebuilt against the real child
       // once the parent finishes signing up (see utils/pendingAssessment).
+      track("assessment_complete");
       savePendingAssessment(answers);
       setPlanResult(data);
     },
@@ -60,6 +63,9 @@ export default function PublicAssessmentScreen() {
 
   const selectAnswer = (value: string) => {
     if (!current) return;
+    // step = the question they just answered, so a drop-off shows as the last
+    // step recorded rather than a missing "complete".
+    track("assessment_step", { step: step + 1 });
     setAnswers(prev => ({ ...prev, [current.step]: value }));
     if (step + 1 >= questions.length) { animateProgress(total); return; }
     animateProgress(step + 1);

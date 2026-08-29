@@ -3,6 +3,7 @@
  * Hero · Assessment CTA · Cultural tracks · 9 Subjects · Worksheet preview
  * · Testimonials · Progress cards · Pricing · Community · School licensing
  */
+import { track, useTrackView } from "../../utils/track";
 import { useState } from "react";
 import { ScrollView, View, Text, TouchableOpacity, TextInput,
          Platform, Linking, Image, StyleSheet, useWindowDimensions } from "react-native";
@@ -153,6 +154,7 @@ const HERO_SAMPLES: any[] = [
 const LANG_ID: Record<Lang, number> = { en: 1, zh: 2, hi: 3, es: 4 };
 
 export default function LandingPage() {
+  useTrackView("landing_view");
   const router = useRouter();
   const { lang, setLang } = useLangStore();
   const languageId = LANG_ID[lang] ?? 1;
@@ -369,7 +371,7 @@ export default function LandingPage() {
   };
 
   const goAssessment = () => router.push("/(auth)/assessment");
-  const goPricing    = () => scrollTo("pricing");
+  const goPricing    = () => { track("pricing_view"); scrollTo("pricing"); };
 
   return (
     <ScrollView style={s.root} contentContainerStyle={s.rootContent} showsVerticalScrollIndicator={false}>

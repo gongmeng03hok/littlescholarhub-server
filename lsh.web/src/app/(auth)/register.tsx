@@ -1,3 +1,4 @@
+import { track, useTrackView } from "../../utils/track";
 import { readPendingAssessment } from "../../utils/pendingAssessment";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
@@ -14,6 +15,7 @@ const LANGS = [
 ];
 
 export default function RegisterScreen() {
+  useTrackView("register_view");
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [email, setEmail]       = useState("");
@@ -49,6 +51,7 @@ export default function RegisterScreen() {
         router.replace("/(auth)/login");
         return;
       }
+      track("register_success", { meta: role });
       setAuth(data.token, { family_id: data.family_id }, data.role || role);
       if (role === "teacher") { router.replace("/(teacher)"); return; }
       // A parent who arrived from the public assessment still has no child, so

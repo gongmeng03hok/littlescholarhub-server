@@ -12,6 +12,7 @@
  * That is how "Animals Art - Grade 2nd" opened a money-counting quiz. The API
  * marks the distinction with `is_demo` so both clients agree.
  */
+import { track, useTrackView } from "../../utils/track";
 import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -25,6 +26,7 @@ const DEMO_CONTENT_TYPES = ["coloring", "space_image", "mini_book", "iacl_book"]
 const NO_QUESTION_SUBJECTS = ["art", "story", "workbooks", "solar_system", "science", "writing"];
 
 export default function SampleScreen() {
+  useTrackView("sample_view");
   const router = useRouter();
   const { subject, grade, title, id } = useLocalSearchParams<{
     subject: string; grade: string; title: string; id?: string;
