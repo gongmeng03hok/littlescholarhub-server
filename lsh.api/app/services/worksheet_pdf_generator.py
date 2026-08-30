@@ -5411,6 +5411,231 @@ GENERATORS = {
 # generically from that JSON instead of from a hardcoded Python function —
 # see lsh.database/42_worksheet_content_data.sql and
 # scratch_tmp/extract_worksheet_content.py for how content_data gets there.
+# ── Colorable outlines ─────────────────────────────────────────────────────
+# Each draws into a 200x150 local box. Stroke only: a filled shape cannot be
+# colored in, and thin lines vanish under a blunt crayon.
+
+def _o_rainbow(g, O, S):
+    from reportlab.graphics.shapes import PolyLine, Line
+    for i in range(7):
+        r = 96 - i * 9
+        g.add(PolyLine(_arc(100, 16, r, r, 0, 180, 44), **O))
+    for cx in (20, 180):                                   # a cloud at each end
+        g.add(PolyLine(_arc(cx - 14, 20, 14, 12, 0, 180, 20), **O))
+        g.add(PolyLine(_arc(cx + 1, 24, 17, 15, 0, 180, 20), **O))
+        g.add(PolyLine(_arc(cx + 16, 20, 13, 11, 0, 180, 20), **O))
+        g.add(Line(cx - 28, 20, cx + 29, 20, **O))
+
+
+def _o_sun(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, PolyLine
+    import math
+    g.add(Circle(100, 75, 44, **O))
+    for k in range(12):                                     # rays
+        a = math.radians(k * 30)
+        x1, y1 = 100 + 50 * math.cos(a), 75 + 50 * math.sin(a)
+        x2, y2 = 100 + 68 * math.cos(a), 75 + 68 * math.sin(a)
+        pa = a + 0.13
+        g.add(Polygon([100 + 50 * math.cos(pa), 75 + 50 * math.sin(pa),
+                       x2, y2,
+                       100 + 50 * math.cos(a - 0.13), 75 + 50 * math.sin(a - 0.13)], **O))
+    g.add(Circle(86, 86, 4.2, **S))
+    g.add(Circle(114, 86, 4.2, **S))
+    g.add(PolyLine(_arc(100, 78, 20, 17, 200, 340), **O))
+
+
+def _o_flower(g, O, S):
+    from reportlab.graphics.shapes import Circle, PolyLine, Line
+    import math
+    # Six round petals on a ring, sized so neighbours just touch. The first
+    # version used eight ellipses at the same radius and they overlapped into
+    # a knot of loops.
+    for k in range(6):
+        a = math.radians(k * 60 + 90)
+        g.add(Circle(100 + 42 * math.cos(a), 94 + 42 * math.sin(a), 20, **O))
+    g.add(Circle(100, 94, 21, **O))
+    g.add(Line(100, 73, 100, 8, **O))
+    g.add(PolyLine(_arc(76, 44, 24, 14, -6, 154), **O))
+    g.add(PolyLine(_arc(124, 30, 24, 14, 26, 186), **O))
+
+
+def _o_butterfly(g, O, S):
+    from reportlab.graphics.shapes import Circle, Ellipse, PolyLine, Line
+    g.add(Ellipse(100, 72, 7, 44, **O))                      # body
+    g.add(Circle(100, 122, 9, **O))                          # head
+    g.add(PolyLine([100, 130, 88, 146], **O))                # antennae
+    g.add(PolyLine([100, 130, 112, 146], **O))
+    for sgn in (-1, 1):
+        g.add(Ellipse(100 + sgn * 42, 96, 38, 30, **O))      # upper wings
+        g.add(Ellipse(100 + sgn * 34, 44, 30, 24, **O))      # lower wings
+        g.add(Circle(100 + sgn * 46, 100, 9, **O))           # spots to color
+        g.add(Circle(100 + sgn * 34, 44, 7, **O))
+
+
+def _o_shark(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, PolyLine
+    g.add(PolyLine(_arc(96, 74, 76, 34, 0, 180, 40), **O))   # back
+    g.add(PolyLine(_arc(96, 74, 76, 30, 180, 360, 40), **O))  # belly
+    g.add(Polygon([88, 106, 104, 140, 120, 104], **O))       # dorsal fin
+    g.add(Polygon([172, 74, 196, 104, 190, 74, 196, 44], **O))  # tail
+    g.add(Polygon([96, 46, 84, 22, 118, 44], **O))           # pectoral fin
+    g.add(Circle(44, 84, 4.5, **S))
+    g.add(PolyLine(_arc(40, 74, 22, 14, 190, 250), **O))     # mouth
+    for x in (58, 66, 74):
+        g.add(PolyLine(_arc(x, 74, 12, 20, 250, 290), **O))  # gills
+
+
+def _o_race_car(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, Rect, PolyLine
+    g.add(Polygon([16, 44, 184, 44, 178, 70, 24, 70], **O))  # chassis
+    g.add(Polygon([62, 70, 84, 100, 128, 100, 142, 70], **O))  # cabin
+    g.add(Rect(158, 70, 26, 8, **O))                          # spoiler
+    g.add(PolyLine([170, 70, 170, 62], **O))
+    g.add(Circle(56, 40, 22, **O))
+    g.add(Circle(56, 40, 9, **O))
+    g.add(Circle(146, 40, 22, **O))
+    g.add(Circle(146, 40, 9, **O))
+    g.add(Circle(100, 56, 11, **O))                           # number roundel
+
+
+def _o_rocket(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, PolyLine, Line
+    # Fins outside the body. Tucked against it they vanished into the
+    # silhouette and the whole thing read as a lighthouse.
+    g.add(Polygon([80, 36, 54, 6, 80, 56], **O))
+    g.add(Polygon([120, 36, 146, 6, 120, 56], **O))
+    g.add(Line(80, 36, 80, 100, **O))
+    g.add(Line(120, 36, 120, 100, **O))
+    g.add(Line(80, 36, 120, 36, **O))
+    g.add(Polygon([80, 100, 100, 142, 120, 100], **O))
+    g.add(Line(80, 100, 120, 100, **O))
+    g.add(Circle(100, 86, 12, **O))
+    g.add(Circle(100, 56, 8, **O))
+    for dx in (-11, 0, 11):                                   # flame
+        g.add(Polygon([94 + dx, 36, 100 + dx, 8, 106 + dx, 36], **O))
+
+
+def _o_spaceship(g, O, S):
+    from reportlab.graphics.shapes import Circle, Ellipse, PolyLine, Polygon
+    g.add(Ellipse(100, 62, 86, 22, **O))                      # saucer
+    g.add(PolyLine(_arc(100, 66, 46, 44, 10, 170, 34), **O))  # dome
+    g.add(PolyLine([54, 66, 146, 66], **O))
+    for x in (64, 100, 136):
+        g.add(Circle(x, 54, 7, **O))                          # lights
+    g.add(Polygon([76, 42, 100, 12, 124, 42], **O))           # beam
+    g.add(Circle(100, 96, 10, **O))
+
+
+def _o_castle(g, O, S):
+    from reportlab.graphics.shapes import Rect, Polygon, PolyLine, Circle
+    def tower(x, w, h):
+        g.add(Rect(x, 20, w, h, **O))
+        n, cw = 4, w / 7.0
+        for k in range(n):
+            bx = x + k * (w - cw) / (n - 1.0)
+            g.add(Rect(bx, 20 + h, cw, 9, **O))
+    tower(18, 44, 84)
+    tower(138, 44, 84)
+    tower(74, 52, 62)
+    g.add(PolyLine([62, 62, 74, 62], **O))
+    g.add(PolyLine([126, 62, 138, 62], **O))
+    g.add(PolyLine(_arc(100, 20, 17, 30, 0, 180, 22), **O))   # gate arch
+    g.add(PolyLine([83, 20, 83, 20], **O))
+    for x in (34, 154):
+        g.add(Circle(x + 6, 78, 8, **O))                      # windows
+    g.add(PolyLine([100, 91, 100, 118], **O))                 # flagpole
+    g.add(Polygon([100, 118, 128, 110, 100, 102], **O))       # flag
+
+
+def _o_unicorn(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, PolyLine, Line
+    # A closed head silhouette. Before, the muzzle was a loose arc floating
+    # beside a circle and the mane was a pile of unattached loops.
+    head = [22, 66, 17, 80, 30, 93, 56, 103, 78, 113, 97, 111, 105, 92,
+            97, 66, 70, 54, 40, 54]
+    g.add(Polygon(head, **O))
+    g.add(Polygon([86, 112, 99, 150, 105, 110], **O))         # horn
+    for k in range(4):                                        # horn stripes
+        g.add(Line(88 + k * 2.6, 118 + k * 8, 103 - k * 1.4, 116 + k * 8, **O))
+    g.add(Polygon([105, 104, 120, 128, 111, 98], **O))        # ear
+    for k in range(3):                                        # mane, against the head
+        g.add(PolyLine(_arc(103 + k * 3, 92 - k * 15, 17, 19, 70, 262), **O))
+    g.add(Circle(55, 88, 4.2, **S))
+    g.add(Circle(28, 75, 3.2, **S))
+    g.add(Line(19, 71, 33, 66, **O))
+
+
+def _o_trex(g, O, S):
+    from reportlab.graphics.shapes import Circle, Polygon, PolyLine, Line
+    # One closed silhouette. Drawn as separate parts they never met, and the
+    # head floated away from the body.
+    body = [20, 96, 56, 101, 70, 112, 98, 121, 140, 111, 178, 97, 197, 73,
+            169, 67, 151, 50, 147, 19, 159, 13, 137, 15, 133, 48, 112, 52,
+            108, 19, 121, 13, 99, 15, 95, 49, 78, 58, 66, 74, 20, 81]
+    g.add(Polygon(body, **O))
+    g.add(Line(20, 88, 62, 91, **O))                          # jaw
+    for k in range(5):                                        # teeth
+        x = 26 + k * 8
+        g.add(Polygon([x, 88, x + 4, 82, x + 8, 88], **O))
+    g.add(Circle(48, 96, 4, **S))
+    g.add(Polygon([84, 62, 70, 44, 88, 52], **O))             # little arm
+
+
+_OUTLINES = {
+    "rainbow": _o_rainbow, "sun": _o_sun, "flower": _o_flower,
+    "butterfly": _o_butterfly, "shark": _o_shark, "race_car": _o_race_car,
+    "rocket": _o_rocket, "spaceship": _o_spaceship, "castle": _o_castle,
+    "unicorn": _o_unicorn, "trex": _o_trex,
+}
+
+
+def _coloring_outline(shape, title, facts, footer_label, grade=None):
+    """A real coloring page: one big outline, then the facts.
+
+    Replaces _draw_your_own, which drew a dashed rectangle with a dashed
+    ellipse in the middle and called itself an honest substitute. A child
+    given an empty box has been given nothing to start from.
+    """
+    from reportlab.platypus import Paragraph, Spacer
+    from reportlab.graphics.shapes import Drawing, Group
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+
+    INK = colors.HexColor("#4c46b8")
+    buf, doc, story, styles = _doc(title, "Trace the outline, then color it in.")
+
+    draw = _OUTLINES.get(shape)
+    if draw is None:
+        raise KeyError("no outline for %r" % shape)
+
+    # Younger children get a heavier line; it survives a blunt crayon.
+    lw = 3.0 if (grade is None or int(grade) <= 2) else 2.4
+    O = dict(strokeColor=INK, strokeWidth=lw, fillColor=None,
+             strokeLineCap=1, strokeLineJoin=1)
+    S = dict(strokeColor=INK, strokeWidth=0, fillColor=INK)
+
+    inner = Group()
+    draw(inner, O, S)
+
+    W = 6.9 * inch
+    sc = W / 200.0
+    d = Drawing(W, 150 * sc)
+    inner.transform = (sc, 0, 0, sc, 0, 0)
+    d.add(inner)
+    story.append(d)
+    story.append(Spacer(1, 14))
+
+    story.append(Paragraph("Fun facts to inspire your coloring:", ParagraphStyle(
+        "h", parent=styles["Heading3"], fontSize=13, spaceAfter=6)))
+    for f in facts:
+        story.append(Paragraph("\u2022  " + f, ParagraphStyle(
+            "f", parent=styles["Normal"], fontSize=11.5, leading=17, spaceAfter=3)))
+    _footer(story, styles, footer_label)
+    doc.build(story)
+    return buf.getvalue()
+
+
 _RENDERERS = {
     "build":             _build,
     "text_page":         _text_page,
@@ -5420,6 +5645,7 @@ _RENDERERS = {
     "draw_your_own":     _draw_your_own,
     # Takes `grade`; render_from_content_data passes it when the row has one.
     "family_tree":       _draw_your_family,
+    "color_outline":     _coloring_outline,
 }
 
 
