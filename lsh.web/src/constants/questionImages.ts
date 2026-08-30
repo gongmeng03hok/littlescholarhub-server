@@ -23,6 +23,66 @@
 
 import { hasArt } from "./artIndex";
 
+
+// ── Generated scene art ─────────────────────────────────────────────
+// One illustration per scenario. Without these every prompt that had no
+// hand-drawn PNG fell through to the subject icon, so two different
+// questions showed the same heart. Dual-coding research is clear that a
+// picture carrying no information about THIS question adds cognitive load
+// rather than removing it, so a repeated icon is worse than none.
+//   https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8963493/
+const GENERATED_SCENES: [RegExp, string][] = [
+  [/wake up on your birthday/i, "scene_birthday"],
+  [/open a present|get to open/i, "scene_gift_open"],
+  [/big dog barks|dog barks loudly/i, "scene_dog_bark"],
+  [/finish a puzzle|puzzle all by yourself/i, "scene_puzzle_done"],
+  [/takes your toy|toy without asking/i, "scene_toy_taken"],
+  [/cannot find your shoes|find your shoes/i, "scene_lost_shoes"],
+  [/grandma gives you a big hug|big hug/i, "scene_hug"],
+  [/rains and you cannot go outside/i, "scene_rain_inside"],
+  [/last one picked/i, "scene_last_picked"],
+  [/spill juice|spill.*floor/i, "scene_spill"],
+  [/nothing to do for a long time/i, "scene_bored"],
+  [/best friend moves|friend moves to another/i, "scene_friend_moves"],
+  [/studied hard but still got/i, "scene_got_it_wrong"],
+  [/chosen for something you wanted/i, "scene_jealous"],
+  [/told a small lie/i, "scene_guilty"],
+  [/read out loud to the whole class/i, "scene_read_aloud"],
+  [/helped someone who was struggling/i, "scene_helped"],
+  [/did not invite you/i, "scene_not_invited"],
+  [/finally learn something/i, "scene_finally_learn"],
+  [/whole class of new people/i, "scene_new_class"],
+  [/treated unfairly/i, "scene_unfair"],
+  [/happy to move to a new school|mixed feelings/i, "scene_mixed"],
+  [/BEFORE you speak|take a breath/i, "scene_breathe"],
+  [/apologises properly|forgive/i, "scene_forgive"],
+  [/sneezes near you/i, "scene_sneeze"],
+  [/want the bread|pass the bread/i, "scene_pass_bread"],
+  [/say to the cook/i, "scene_thank_cook"],
+  [/bump into someone/i, "scene_bump"],
+  [/present you already own/i, "scene_present_dup"],
+  [/past someone in a doorway/i, "scene_doorway"],
+  [/visitor arrives/i, "scene_visitor"],
+  [/shows you their drawing/i, "scene_friend_drawing"],
+  [/need to cough/i, "scene_cough"],
+  [/holds a door open/i, "scene_door_held"],
+  [/interrupt someone talking/i, "scene_interrupt"],
+  [/new child is standing alone/i, "scene_new_child"],
+  [/served food you dislike/i, "scene_dislike_food"],
+  [/telling a long story|shows you are listening/i, "scene_listening"],
+  [/borrowed something and broke/i, "scene_broke_it"],
+  [/disagree with a friend/i, "scene_disagree"],
+  [/elderly person is standing|offer them your seat/i, "scene_bus_seat"],
+  [/win a game against/i, "scene_won_game"],
+  [/lose a game/i, "scene_lost_game"],
+  [/group chat/i, "scene_group_chat"],
+  [/real apology|hurt someone/i, "scene_apology"],
+  [/given credit for work/i, "scene_credit"],
+  [/running late to meet/i, "scene_late"],
+  [/tells you something private/i, "scene_private"],
+  [/customs differ/i, "scene_customs"],
+];
+
 const SCENE_RULES: [RegExp, any][] = [
   // ── Feelings & Emotions scenarios ──────────────────────────────
   [/surprise gift|got a .*gift/i,          require("../assets/scenes/gift.png")],
@@ -208,9 +268,15 @@ export function questionImage(questionText?: string, hint?: string, ctx?: ArtCon
     if (img) return img;
   }
 
-  // 2 · Hand-authored scenes (feelings / manners).
+  // 2 · Hand-authored scenes (feelings / manners) win where they exist.
   for (const [re, img] of SCENE_RULES) {
     if (re.test(hay)) return img;
+  }
+
+  // 2b · Otherwise the generated scene for this exact scenario, so no two
+  //      prompts in a round share a picture.
+  for (const [re, name] of GENERATED_SCENES) {
+    if (re.test(hay) && hasArt(name)) return { uri: "/art/" + name + ".svg" };
   }
 
   // 3 · Object art: a dropped-in PNG first, else the built-in glassy SVG.
