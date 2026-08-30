@@ -3,6 +3,7 @@
  * Built from a small batch of questions; records one attempt per matched pair
  * so rewards flow exactly like the other games.
  */
+import { CelebrationBurst } from "../CelebrationBurst";
 import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { GameQuestion, answerOf, textOf, recordAttempt, shuffle, Celebrate, colors } from "./gameKit";
@@ -32,12 +33,16 @@ export function MatchGame({ questions, childId, context, onDone }: Props) {
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [flash, setFlash]     = useState<{ side: "l" | "r"; key: number } | null>(null);
   const [wonAt, setWonAt]     = useState(false);
+  // Bumped on each correct pair so the burst replays; a run of correct
+  // matches is the thing worth rewarding, not just finishing the board.
+  const [burst, setBurst]     = useState(0);
 
   const tryMatch = async (leftKey: number, rightAnswer: string, rightKey: number) => {
     const left = lefts.find(l => l.key === leftKey)!;
     if (left.answer.toLowerCase() === rightAnswer.toLowerCase()) {
       const next = new Set(matched); next.add(leftKey);
       setMatched(next); setSel(null);
+      setBurst(b => b + 1);
       await recordAttempt(left.q, childId, left.answer);
       if (next.size === lefts.length) {
         setWonAt(true);
@@ -52,6 +57,13 @@ export function MatchGame({ questions, childId, context, onDone }: Props) {
 
   return (
     <View style={s.card}>
+      <CelebrationBurst
+        trigger={burst}
+        grade={typeof context?.grade === "number"
+                 ? context.grade
+                 : parseInt(String(context?.grade ?? 0), 10) || 0}
+        streak={matched.size}
+      />
       {wonAt && <Celebrate emoji="🎉" />}
       <Text style={s.title}>Match each one to its answer</Text>
       <View style={s.columns}>

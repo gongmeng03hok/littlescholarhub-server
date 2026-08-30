@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { CelebrationBurst } from "./CelebrationBurst";
+import { useRef, useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { questionsApi } from "../api/questions";
 import { colors } from "../constants/theme";
@@ -30,6 +31,10 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
   const [selected,  setSelected] = useState<string | null>(null);
   const [result,    setResult]   = useState<"correct" | "wrong" | null>(null);
   const [loading,   setLoading]  = useState(false);
+  // Bumped on every correct answer so the burst replays; the streak is
+  // kept here rather than in the parent so a single card can show it.
+  const [celebrate, setCelebrate] = useState(0);
+  const streak = useRef(0);
   const isMCQ = !!question.options?.length;
 
   const questionText = question.question_text ?? question.question ?? "";
@@ -50,6 +55,12 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
       }) as any;
       const isCorrect = res.is_correct;
       setResult(isCorrect ? "correct" : "wrong");
+      if (isCorrect) {
+        streak.current += 1;
+        setCelebrate(c => c + 1);
+      } else {
+        streak.current = 0;
+      }
       setTimeout(() => onResult(isCorrect), 1200);
     } catch {
       setResult("wrong");
@@ -63,6 +74,11 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
 
   return (
     <View style={[s.card, result === "correct" && s.correct, result === "wrong" && s.wrong]}>
+      <CelebrationBurst
+        trigger={celebrate}
+        grade={typeof context?.grade === "number" ? context.grade : parseInt(String(context?.grade ?? 0), 10) || 0}
+        streak={streak.current}
+      />
       {sceneImg && (
         <Image source={sceneImg} style={s.sceneImg} resizeMode="contain" />
       )}
