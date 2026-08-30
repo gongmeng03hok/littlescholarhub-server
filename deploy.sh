@@ -29,6 +29,7 @@ if [ "$TARGET" = web ] || [ "$TARGET" = all ]; then
   # sitemap's lastmod should track the deploy rather than whenever it was
   # first written.
   $ROOT/lsh.api/venv/bin/python $ROOT/make_seo.py $ROOT/lsh.web/src/dist
+  $ROOT/lsh.api/venv/bin/python $ROOT/topic_pages.py $ROOT/lsh.web/src/dist
   cp $ROOT/lsh.web/src/public/robots.txt $ROOT/lsh.web/src/public/sitemap.xml $ROOT/lsh.web/src/dist/ 2>/dev/null || true
 
   echo ">> [web] publishing"

@@ -68,6 +68,12 @@ PAGES = {
         "no credit card required, and a 30-day money-back guarantee. One subscription covers "
         "up to four children.",
     ),
+    "/chinese-worksheets-for-kids": ("", "", ("0.8", "monthly"), ""),
+    "/hindi-and-gita-worksheets-for-kids": ("", "", ("0.8", "monthly"), ""),
+    "/spanish-worksheets-for-kids": ("", "", ("0.8", "monthly"), ""),
+    "/tk-kindergarten-worksheets": ("", "", ("0.8", "monthly"), ""),
+    "/homeschool-worksheets-printable": ("", "", ("0.8", "monthly"), ""),
+    "/afterschool-learning-activities": ("", "", ("0.8", "monthly"), ""),
     "/login": (
         "Sign in | Little Scholars Hub",
         "Sign in to your Little Scholars Hub family account.",
@@ -107,7 +113,10 @@ def write_sitemap(today):
             continue
         pri, freq = sm
         out += ["  <url>",
-                "    <loc>%s%s</loc>" % (SITE, "" if path == "/" else path),
+                # Directory-served pages answer on the trailing slash; listing the
+        # un-slashed form makes every entry a redirect.
+        "    <loc>%s%s</loc>" % (SITE, "" if path == "/" else
+                                 (path + "/" if path.count("-") >= 2 else path)),
                 "    <lastmod>%s</lastmod>" % today,
                 "    <changefreq>%s</changefreq>" % freq,
                 "    <priority>%s</priority>" % pri,
@@ -123,6 +132,10 @@ def esc(t):
              .replace(">", "&gt;").replace('"', "&quot;"))
 
 
+#: Written by topic_pages.py, which owns their copy and schema markup.
+TOPIC_SLUGS = ['chinese-worksheets-for-kids', 'hindi-and-gita-worksheets-for-kids', 'spanish-worksheets-for-kids', 'tk-kindergarten-worksheets', 'homeschool-worksheets-printable', 'afterschool-learning-activities']
+
+
 def build_shells(dist):
     """Rewrite the built index.html once per route."""
     base_path = os.path.join(dist, "index.html")
@@ -131,6 +144,8 @@ def build_shells(dist):
     base = io.open(base_path, encoding="utf-8").read()
     made = 0
     for path, (title, desc, sm, noscript) in PAGES.items():
+        if path.strip('/') in TOPIC_SLUGS:
+            continue
         h = base
         url = SITE + ("/" if path == "/" else path)
 
