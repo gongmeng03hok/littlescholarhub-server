@@ -11,7 +11,7 @@ failure exits non-zero so `deploy.sh` (set -e) stops before publishing.
 
 Usage:  python3 contract_test.py [base_url]     default http://127.0.0.1:5001
 """
-import json, sys, urllib.request, urllib.error
+import io, json, sys, urllib.request, urllib.error
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:5001").rstrip("/")
 fails, checks = [], [0]
@@ -182,6 +182,64 @@ def c_no_empty_cells():
     return (not bad), bad
 
 
+# ── every scene rule still matches a live question ─────────────────────────
+# Reworded questions orphan their illustration; the scenario then falls back
+# to the generic subject icon and two different prompts show the same picture.
+def c_scene_art():
+    import re
+    ts = "/var/www/littlescholarhub/lsh.web/src/constants/questionImages.ts"
+    try:
+        src = io.open(ts, encoding="utf-8").read()
+    except Exception as e:
+        return False, "cannot read questionImages.ts: %s" % e
+    if "GENERATED_SCENES" not in src:
+        return False, "GENERATED_SCENES missing"
+    block = src.split("const GENERATED_SCENES", 1)[1].split("];", 1)[0]
+    rules = re.findall(r'\[/(.+?)/i,\s*"([^"]+)"\]', block)
+    if len(rules) < 40:
+        return False, "only %d scene rules parsed" % len(rules)
+
+    corpus = []
+    for subj in ("feelings", "manners"):
+        for g in range(8):
+            for _ in range(6):
+                try:
+                    _c, d = get("/api/questions/generate?subject=%s&grade=%d&count=5"
+                                % (subj, g))
+                except Exception:
+                    continue
+                for q in d.get("questions", []):
+                    corpus.append((q.get("question") or "") + " " + (q.get("hint") or ""))
+    dead = [n for pat, n in rules
+            if not any(re.search(pat, t, re.I) for t in corpus)]
+    return (not dead), "no live question matches: " + ", ".join(dead[:6])
+
+
+# ── no published worksheet 500s when a child opens it ──────────────────────
+def c_no_500s():
+    bad = []
+    for grade in range(8):
+        try:
+            _c, rows = get("/api/content/worksheets?grade=%d" % grade)
+        except Exception:
+            continue
+        for w in (rows or [])[:14]:
+            if w.get("is_demo"):
+                continue
+            skill = w.get("skill_key") or ""
+            subj = w.get("subject") or "math"
+            url = ("/api/questions/generate?subject=%s&grade=%s&count=3&skill=%s"
+                   % (subj, w.get("grade_id", grade), skill))
+            try:
+                _c2, d = get(url)
+                if len(d.get("questions", [])) < 3:
+                    bad.append("ws%s thin" % w.get("worksheet_id"))
+            except Exception as e:
+                bad.append("ws%s %s" % (w.get("worksheet_id"),
+                                        getattr(e, "code", type(e).__name__)))
+    return (not bad), bad[:8]
+
+
 print("API contract test -> %s" % BASE)
 check("GET /content/worksheets/<id> returns 200 + is_demo + steps", c_detail)
 check("list endpoint exposes is_demo", c_list_is_demo)
@@ -194,6 +252,8 @@ check("worksheet payload carries skill_key", c_skill_key_derived)
 check("all 10 named skills serve their own questions", c_skills)
 check("age bands: no TK material for older children", c_age_bands)
 check("every subject x grade returns questions (48 cells)", c_no_empty_cells)
+check("no published worksheet 500s when opened", c_no_500s)
+check("every scene-art rule still matches a live question", c_scene_art)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 if fails:

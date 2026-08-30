@@ -1,9 +1,9 @@
 /**
- * PaintCanvas — colour the picture on screen, and stick stickers on it.
+ * PaintCanvas — color the picture on screen, and stick stickers on it.
  *
- * The colouring worksheets used to offer a PDF and nothing else, so a child on a
+ * The coloring worksheets used to offer a PDF and nothing else, so a child on a
  * tablet saw a cover image and a print button. Here the same line art that comes
- * out of the printer is tappable: pick a colour, tap a region, it fills. Pick a
+ * out of the printer is tappable: pick a color, tap a region, it fills. Pick a
  * sticker and the next tap drops it wherever you touched.
  *
  * Two press paths share one canvas, so they must not fight:
@@ -71,14 +71,14 @@ export function PaintCanvas({ sceneKey, style }: { sceneKey: string; style?: Vie
       <Text style={s.hint}>
         {armed
           ? "Now tap the picture to stick it on"
-          : "Tap a colour, then tap a part of the picture"}
+          : "Tap a color, then tap a part of the picture"}
       </Text>
 
       <View
         style={s.canvas}
         onLayout={onLayout}
         // Capture only while a sticker is armed, so ordinary taps still reach
-        // the shapes underneath and colour them.
+        // the shapes underneath and color them.
         onStartShouldSetResponderCapture={() => !!armed}
         onResponderRelease={place}
       >
@@ -121,7 +121,7 @@ export function PaintCanvas({ sceneKey, style }: { sceneKey: string; style?: Vie
         </Svg>
       </View>
 
-      <Text style={s.label}>Colours</Text>
+      <Text style={s.label}>Colors</Text>
       <View style={s.row}>
         {PAINT_COLORS.map((c) => (
           <TouchableOpacity
@@ -137,7 +137,7 @@ export function PaintCanvas({ sceneKey, style }: { sceneKey: string; style?: Vie
           onPress={() => { setColor("#ffffff"); setArmed(null); }}
           style={[s.swatch, s.eraser, color === "#ffffff" && !armed && s.swatchOn]}
           accessibilityRole="button"
-          accessibilityLabel="Rub a colour out"
+          accessibilityLabel="Rub a color out"
         >
           <Text style={s.eraserText}>✕</Text>
         </TouchableOpacity>

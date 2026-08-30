@@ -38,7 +38,7 @@ function timeAgo(dateStr: string | null | undefined): string {
 }
 
 /** A book-style cover: real thumbnail if we have one, otherwise a
- * generated colour block with the title — every card reads as a book
+ * generated color block with the title — every card reads as a book
  * either way, none look "broken". */
 function StoryCover({ item, hovered }: { item: any; hovered: boolean }) {
   if (item.thumbnail_url) {
@@ -329,7 +329,7 @@ export default function StoryScreen() {
           <View style={s.promptCard}>
             <Text style={s.promptTitle}>💬 Talk about it</Text>
             {[
-              "What was your favourite part of the story?",
+              "What was your favorite part of the story?",
               "What would you have done differently?",
               "What does this story teach us?",
             ].map(q => (

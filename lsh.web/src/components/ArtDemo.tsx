@@ -47,10 +47,10 @@ const VERB: Record<string, string> = {
 /**
  * Closing line when there are no steps and no video. Keyed by content type
  * first, then subject — a story activity must never be told there is "no wrong
- * way to colour it", which is what a single coloring-page default produced.
+ * way to color it", which is what a single coloring-page default produced.
  */
 const HINT_BY_TYPE: Record<string, string> = {
-  coloring:    "Print the sheet and make it together — there's no wrong way to colour it.",
+  coloring:    "Print the sheet and make it together — there's no wrong way to color it.",
   space_image: "Open the picture full-size and talk about what you notice first.",
   mini_book:   "Print it, fold it, and read it together — your child can keep this one.",
   iacl_book:   "Open the book and read a few pages together.",
@@ -99,7 +99,7 @@ const HINT_BY_SUBJECT: Record<string, string> = {
   writing:   "Print the page and write it together. Spelling can wait; ideas come first.",
   science:   "Print the sheet and try it together — talk about what you expect before you start.",
   workbooks: "Print the pages and work through them at your child's own pace.",
-  art:       "Print the sheet and make it together — there's no wrong way to colour it.",
+  art:       "Print the sheet and make it together — there's no wrong way to color it.",
 };
 
 export function ArtDemo({ worksheet, onExit }: { worksheet: DemoWorksheet; onExit: () => void }) {
@@ -122,7 +122,7 @@ export function ArtDemo({ worksheet, onExit }: { worksheet: DemoWorksheet; onExi
   const [thumbFailed, setThumbFailed] = useState(false);
   const cover = (!thumbFailed && w.thumbnail_url) ? w.thumbnail_url : ownArt;
 
-  // A colouring sheet we can draw shows the real drawing instead of a cover.
+  // A coloring sheet we can draw shows the real drawing instead of a cover.
   const paintable = hasPaintScene(w.pdf_generator_key);
 
   return (
@@ -220,7 +220,7 @@ export function ArtDemo({ worksheet, onExit }: { worksheet: DemoWorksheet; onExi
           {steps.length === 0 && !w.video_url && (
             <Text style={s.hint}>
               {paintable
-                ? "Paint it here, or print the same picture to colour on paper."
+                ? "Paint it here, or print the same picture to color on paper."
                 : HINT_BY_TYPE[w.content_type ?? ""]
                 ?? HINT_BY_SUBJECT[w.subject ?? ""]
                 ?? "Print the sheet and work through it together."}

@@ -241,8 +241,12 @@ _SKILL_PATTERNS = [
     (r"pre.algebra|variable|solve for x|algebra",               "prealgebra"),
     (r"ratio|proportion|bar model",                             "ratios"),
     # Cultural tracks - the generators existed, the patterns did not
-    (r"tone|pinyin|声调",                                     "pinyin_tone"),
-    (r"tang shi|tang poem|唐诗|poem",                                  "tang_poem"),
+    # Not a bare "tone": "Theme & Tone Reading Pack" is 5th-grade English and
+    # was being served "What tone is the syllable hao?". Both real Chinese
+    # sheets carry an explicit pinyin/声调 cue, so the cue is enough.
+    (r"pinyin|声调|tone mark",                                  "pinyin_tone"),
+    # Likewise not a bare "poem", which would capture any English poetry sheet.
+    (r"tang shi|tang poem|唐诗",                                    "tang_poem"),
     (r"primeras palabras|spanish word|vocabulario|palabras",    "spanish_vocab"),
     (r"context clue",                                           "context_clues"),
     (r"fact or opinion|fact vs|fact and opinion",               "fact_opinion"),

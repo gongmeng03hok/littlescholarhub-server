@@ -64,7 +64,7 @@ class QuestionGenerator:
         ("江雪",   "柳宗元", "千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。",
          "A thousand hills, and no bird flies; ten thousand paths, and no footprint."),
         ("早发白帝城","李白", "朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",
-         "At dawn I left Baidi among the coloured clouds, and reached Jiangling in a day."),
+         "At dawn I left Baidi among the colored clouds, and reached Jiangling in a day."),
     ]
 
     GITA_TEACHINGS = [
@@ -84,17 +84,17 @@ class QuestionGenerator:
          "Answering kindly one more time"),
         ("self-control", "You are furious and want to shout. Self-control means:",
          "Waiting until you are calm to speak"),
-        ("effort",      "You practise every day but see no progress yet. Effort means:",
+        ("effort",      "You practice every day but see no progress yet. Effort means:",
          "Doing the work without demanding the reward"),
         ("humility",    "You win a prize in front of everyone. Humility means:",
          "Thanking the people who helped you"),
-        ("fairness",    "You are dividing sweets among friends. Fairness means:",
+        ("fairness",    "You are dividing candy among friends. Fairness means:",
          "Giving each person their proper share"),
         ("gratitude",   "Someone cooked a meal you did not much like. Gratitude means:",
          "Thanking them for the trouble they took"),
         ("focus",       "Your phone buzzes while you are studying. Focus means:",
          "Finishing the task before you look"),
-        ("forgiveness", "A friend apologises for something unkind. Forgiveness means:",
+        ("forgiveness", "A friend apologizes for something unkind. Forgiveness means:",
          "Letting the anger go rather than storing it"),
         ("truthfulness", "Telling the truth would get you into trouble. Truthfulness means:",
          "Saying what happened anyway"),
@@ -185,7 +185,7 @@ class QuestionGenerator:
     THEME_PLACE = {
         "animals":   "at the animal shelter",
         "dinosaurs": "at the dinosaur museum",
-        "space":     "at the space centre",
+        "space":     "at the space center",
         "ocean":     "at the aquarium",
         "fantasy":   "at the story corner",
         "vehicles":  "on the school bus",
@@ -404,14 +404,40 @@ class QuestionGenerator:
 
     @classmethod
     def logic_odd_one_out(cls, grade: int, theme: str = "") -> dict:
-        groups = [
-            (["dog","cat","fish","car"],        "car",     "not an animal"),
-            (["red","blue","happy","green"],     "happy",   "not a color"),
-            (["2","4","7","8"],                 "7",       "odd number"),
-            (["circle","triangle","square","Monday"], "Monday", "not a shape"),
-            (["rose","tulip","daisy","oak"],    "oak",     "not a flower"),
-            (["Paris","London","Berlin","Asia"],"Asia",    "not a city"),
+        # `grade` is the LEVEL: 0 is TK and K, 1 is 1st ... 6 is 6th.
+        # Everything below a band is still in play, so older children keep the
+        # easy items as warm-ups; nothing above it leaks down.
+        easy = [
+            (["dog","cat","fish","car"],              "car",     "not an animal"),
+            (["red","blue","happy","green"],          "happy",   "not a color"),
+            (["circle","triangle","square","Monday"], "Monday",  "not a shape"),
+            (["rose","tulip","daisy","oak"],          "oak",     "not a flower"),
+            (["apple","banana","grape","shoe"],       "shoe",    "not a food"),
+            (["cow","pig","duck","truck"],            "truck",   "not an animal"),
+            (["hat","coat","scarf","spoon"],          "spoon",   "not something you wear"),
+            (["bird","bee","plane","whale"],          "whale",   "cannot fly"),
         ]
+        middle = [
+            (["2","4","7","8"],                       "7",       "odd number"),
+            (["Monday","Friday","Sunday","July"],     "July",    "not a day"),
+            (["spring","summer","winter","Tuesday"],  "Tuesday", "not a season"),
+            (["car","bus","train","river"],           "river",   "not a vehicle"),
+            (["hammer","saw","drill","pillow"],       "pillow",  "not a tool"),
+            (["10","20","25","30"],                   "25",      "not a multiple of ten"),
+        ]
+        hard = [
+            (["Paris","London","Berlin","Asia"],      "Asia",    "not a city"),
+            (["violin","guitar","cello","trumpet"],   "trumpet", "not a string instrument"),
+            (["copper","iron","gold","granite"],      "granite", "not a metal"),
+            (["noun","verb","adjective","paragraph"], "paragraph", "not a part of speech"),
+            (["3","5","11","9"],                      "9",       "not a prime number"),
+            (["Nile","Amazon","Sahara","Danube"],     "Sahara",  "not a river"),
+        ]
+        groups = list(easy)
+        if grade >= 1:
+            groups += middle
+        if grade >= 3:
+            groups += hard
         th = cls._theme(theme)
         items, ans, reason = cls.THEME_ODD[th] if th else random.choice(groups)
         shuffled = items[:]
@@ -424,10 +450,16 @@ class QuestionGenerator:
     @classmethod
     def logic_pattern_grid(cls, grade: int, theme: str = "") -> dict:
         shapes  = ["▲","●","■","◆","★"]
-        pattern = [random.choice(shapes) for _ in range(3)]
-        full    = (pattern * 3)[:8]
-        ans     = (pattern * 3)[8 % len(pattern)]
-        opts    = list({ans} | set(random.sample(shapes, 3)))
+        # A two-shape ABAB pattern is the one a TK child can hold in mind; by
+        # 2nd it should be three or four, or the exercise stops teaching.
+        size    = 2 if grade <= 0 else (3 if grade <= 2 else 4)
+        pattern = [random.choice(shapes) for _ in range(size)]
+        full    = (pattern * 5)[:8]
+        ans     = (pattern * 5)[8]
+        # Always four choices: {ans} | sample(3) collapsed to three whenever the
+        # answer happened to be sampled too.
+        others  = [x for x in shapes if x != ans]
+        opts    = [ans] + random.sample(others, 3)
         random.shuffle(opts)
         return {
             "question": "What comes next in the pattern?\n" + "  ".join(full) + "  ___",
@@ -455,16 +487,97 @@ class QuestionGenerator:
             "hint": f"Rule: {rule} — the word is '{word}'"
         }
 
+    #: (sentence with a blank, the word that fills it, three that do NOT).
+    #: Distractors are chosen per sentence rather than sampled: "the" and "a"
+    #: fit almost any frame, so a random draw from the same band regularly
+    #: produced two correct answers.
+    SIGHT_CLOZE = {
+        0: [   # TK and K
+            ("___ dog is big.",            "The",  ["Is", "Go", "We"]),
+            ("I see ___ cat.",             "a",    ["is", "and", "we"]),
+            ("The sun ___ hot.",           "is",   ["go", "and", "the"]),
+            ("The toy is ___ the box.",    "in",   ["and", "is", "we"]),
+            ("I like ___.",                "it",   ["and", "the", "is"]),
+            ("a cup ___ milk",             "of",   ["and", "is", "we"]),
+            ("I want ___ play.",           "to",   ["and", "is", "the"]),
+            ("red ___ blue",               "and",  ["is", "the", "to"]),
+            ("___ can run fast.",          "He",   ["And", "Of", "At"]),
+            ("___ has a hat.",             "She",  ["And", "Of", "At"]),
+            ("___ can play together.",     "We",   ["And", "Of", "At"]),
+            ("Look ___ the bird.",         "at",   ["and", "is", "we"]),
+            ("I want to ___ kind.",        "be",   ["and", "is", "the"]),
+            ("What can you ___?",          "do",   ["and", "of", "the"]),
+            ("Let us ___ outside.",        "go",   ["and", "of", "the"]),
+        ],
+        1: [   # 1st
+            ("The cat ___ asleep.",        "was",  ["with", "from", "they"]),
+            ("This gift is ___ you.",      "for",  ["was", "they", "had"]),
+            ("I like ___ book.",           "that", ["was", "from", "they"]),
+            ("The boy lost ___ hat.",      "his",  ["was", "from", "they"]),
+            ("The girl found ___ shoe.",   "her",  ["was", "from", "they"]),
+            ("___ are my friends.",        "They", ["Was", "With", "From"]),
+            ("Come ___ me.",               "with", ["was", "they", "had"]),
+            ("I want ___ one.",            "this", ["was", "from", "they"]),
+            ("I ___ two cats.",            "have", ["was", "from", "with"]),
+            ("a letter ___ my friend",     "from", ["was", "they", "had"]),
+            ("I only need ___.",           "one",  ["was", "from", "with"]),
+            ("She ___ a good day.",        "had",  ["with", "from", "they"]),
+            ("Sit ___ me.",                "by",   ["was", "they", "had"]),
+            ("It is ___ cold today.",      "not",  ["was", "from", "they"]),
+        ],
+    }
+
+    @classmethod
+    def _misspellings(cls, word: str, k: int = 3) -> list:
+        """Wrong spellings of `word` that are not themselves real words."""
+        real = {w for band in cls.SIGHT_WORDS.values() for w in band}
+        real |= {w for band in cls.SIGHT_CLOZE.values()
+                 for _s, a, ds in band for w in [a.lower()] + [d.lower() for d in ds]}
+        cands = []
+        for i in range(len(word) - 1):                      # swap neighbours
+            cands.append(word[:i] + word[i + 1] + word[i] + word[i + 2:])
+        for i, ch in enumerate(word):                       # swap a vowel
+            if ch in "aeiou":
+                cands += [word[:i] + v + word[i + 1:] for v in "aeiou" if v != ch]
+        for i, ch in enumerate(word):                       # double a letter
+            cands.append(word[:i + 1] + ch + word[i + 1:])
+        random.shuffle(cands)
+        out = []
+        for c in cands:
+            if c != word and c.lower() not in real and c not in out:
+                out.append(c)
+            if len(out) == k:
+                break
+        return out
+
     @classmethod
     def sight_word(cls, grade: int, theme: str = "") -> dict:
-        words = cls.SIGHT_WORDS.get(min(grade, 4), cls.SIGHT_WORDS[2])
-        target = random.choice(words)
-        distractors = random.sample([w for w in words if w != target], min(3, len(words)-1))
-        opts = [target] + distractors
+        # `grade` is the LEVEL: 0 is TK and K, 1 is 1st, 2 is 2nd ...
+        if grade <= 1:
+            # Recognition in context - what the skill is before a child spells.
+            sentence, answer, wrong = random.choice(cls.SIGHT_CLOZE[grade])
+            opts = [answer] + list(wrong)
+            random.shuffle(opts)
+            return {
+                "question": "Which word finishes the sentence?\n\n" + sentence,
+                "answer": answer, "options": opts,
+                "hint": "Read the sentence with each word and hear which one fits.",
+            }
+
+        # 2nd: the spelling task the old prompt claimed to be. Kept inside the
+        # sentence frame rather than asked bare - "Which spelling is correct?"
+        # over his/hiss/hsi/hus has two right answers, because hiss is also a
+        # word. With the sentence, only one spelling can finish it.
+        sentence, target, _unused = random.choice(cls.SIGHT_CLOZE[1])
+        wrong = cls._misspellings(target, 3)
+        if len(wrong) < 3:
+            return cls.sight_word(1, theme)      # nothing plausible; stay safe
+        opts = [target] + wrong
         random.shuffle(opts)
         return {
-            "question": f"Which word is spelled correctly?  (sight word: '{target}')",
-            "answer": target, "options": opts, "hint": None
+            "question": "Which spelling finishes the sentence?\n\n" + sentence,
+            "answer": target, "options": opts,
+            "hint": "Say the word slowly and look at every letter.",
         }
 
     @classmethod
@@ -511,8 +624,8 @@ class QuestionGenerator:
              "how much help a child can get at home, which is not the same as effort.",
              "What is the second argument really objecting to?",
              "That homework may measure advantage rather than effort"),
-            ("The glacier has retreated four kilometres since the first survey in 1912. The "
-             "valley it left behind is now colonised by grasses and, lately, by young birch.",
+            ("The glacier has retreated four miles since the first survey in 1912. The "
+             "valley it left behind is now colonized by grasses and, lately, by young birch.",
              "What does the passage suggest about the valley?",
              "Life moves in once the ice withdraws"),
             ("The advertisement showed a family laughing over a bowl of cereal. It said nothing "
@@ -578,7 +691,7 @@ class QuestionGenerator:
     def hanzi_meaning(cls, grade: int, theme: str = "") -> dict:
         # Banded roughly the way a Chinese primary reader introduces them:
         # numbers and pictographs first, then position and family, then verbs
-        # and colours, then two-character words.
+        # and colors, then two-character words.
         early = [
             ("一","one"),("二","two"),("三","three"),("四","four"),("五","five"),
             ("六","six"),("七","seven"),("八","eight"),("九","nine"),("十","ten"),
@@ -706,16 +819,16 @@ class QuestionGenerator:
     FEELINGS_EARLY = [
         ("Your best friend moves to another city. How do you feel?", "sad", True),
         ("You get to open a present. How do you feel?", "excited", True),
-        ("A big dog barks loudly right next to you. How do you feel?", "scared", True),
+        ("A big dog barks right next to you. How do you feel?", "scared", True),
         ("You finish a puzzle all by yourself. How do you feel?", "proud", True),
         ("Someone takes your toy without asking. How do you feel?", "angry", True),
-        ("You cannot find your shoes and you are late. How do you feel?", "worried", True),
+        ("You cannot find your shoes. How do you feel?", "worried", True),
         ("Your grandma gives you a big hug. How do you feel?", "loved", True),
-        ("It rains and you cannot go outside to play. How do you feel?", "disappointed", True),
-        ("You are the last one picked for a team. How do you feel?", "left out", True),
+        ("It rains, so you cannot go outside. How do you feel?", "disappointed", True),
+        ("You are picked last for a team. How do you feel?", "left out", True),
         ("You wake up on your birthday. How do you feel?", "happy", True),
         ("You spill juice all over the floor. How do you feel?", "embarrassed", True),
-        ("You have nothing to do for a long time. How do you feel?", "bored", True),
+        ("You have nothing to do. How do you feel?", "bored", True),
     ]
 
     FEELINGS_MID = [
@@ -746,7 +859,7 @@ class QuestionGenerator:
          "say calmly how it makes you feel", True),
         ("You are furious. What can you do BEFORE you speak?",
          "take a breath and wait", True),
-        ("Someone apologises properly and means it. What can you choose to do?",
+        ("Someone apologizes properly and means it. What can you choose to do?",
          "forgive them", True),
     ]
 
@@ -769,11 +882,11 @@ class QuestionGenerator:
          ["Watch where you go", "Nothing", "That was your fault"], True),
         ("Someone gives you a present you already own. What do you say?", "Thank you so much",
          ["I have this already", "I wanted something else", "Nothing"], True),
-        ("You want to get past someone in a doorway. What do you say?", "Excuse me, please",
+        ("Someone is standing in the doorway. What do you say?", "Excuse me, please",
          ["Move!", "Push past quietly", "Nothing"], True),
         ("A visitor arrives at your home. What do you do?", "Say hello and welcome them",
          ["Keep watching your show", "Hide in your room", "Ask them to leave"], True),
-        ("Your friend shows you their drawing. What is kind to say?", "I like the colours you chose",
+        ("Your friend shows you their drawing. What is kind to say?", "I like the colors you chose",
          ["Mine is better", "That looks wrong", "Nothing"], True),
         ("You need to cough. What do you do?", "Cover your mouth with your elbow",
          ["Cough on your friend", "Cough on the food", "Nothing"], True),
@@ -1061,14 +1174,15 @@ class QuestionGenerator:
         ("baking muffins", ["mix the batter", "bake the muffins", "eat a muffin"]),
         ("planting a seed", ["dig a hole", "water the seed", "watch it sprout"]),
         ("going to school", ["eat breakfast", "ride the bus", "sit at your desk"]),
-        ("painting a picture", ["choose the colours", "paint the picture", "hang it up to dry"]),
+        ("painting a picture", ["choose the colors", "paint the picture", "hang it up to dry"]),
         ("a butterfly", ["a tiny egg", "a hungry caterpillar", "a butterfly flies away"]),
         ("making a sandwich", ["get the bread", "add the filling", "take a bite"]),
-        ("a rainy day", ["clouds turn grey", "rain falls down", "a rainbow appears"]),
-        ("bedtime", ["put on pyjamas", "brush your teeth", "fall asleep"]),
+        ("a rainy day", ["clouds turn gray", "rain falls down", "a rainbow appears"]),
+        ("bedtime", ["put on pajamas", "brush your teeth", "fall asleep"]),
     ]
 
     #: (thing A, thing B, true of both, true of A only, true of B only)
+    #: Concrete pairs a child can picture. Served from 2nd.
     COMPARISONS = [
         ("a desert", "a rainforest", "it is a habitat where animals live",
          "it gets very little rain", "it rains almost every day"),
@@ -1078,6 +1192,15 @@ class QuestionGenerator:
          "it makes its own light", "it reflects light from the sun"),
         ("a bicycle", "a car", "it carries people from place to place",
          "you power it with your legs", "it needs fuel or a battery"),
+        ("a spider", "an insect", "it is a small animal with many legs",
+         "it has eight legs and no antennae", "it has six legs and antennae"),
+        ("thunder", "lightning", "it happens during a storm",
+         "it is the sound you hear", "it is the flash you see"),
+    ]
+
+    #: Abstract pairs - forms of government, kinds of writing. These need
+    #: knowledge a 2nd grader has not met yet, so they open up at 4th.
+    COMPARISONS_UPPER = [
         ("a poem", "a story", "it is written with words",
          "it often uses rhythm and rhyme", "it usually has a plot and characters"),
         ("an owl", "a bat", "it can fly and hunts at night",
@@ -1096,10 +1219,6 @@ class QuestionGenerator:
          "leaders are chosen by voting", "a ruler inherits the position"),
         ("a fact", "an opinion", "it can appear in a piece of writing",
          "it can be checked and proved", "it expresses what someone believes"),
-        ("a spider", "an insect", "it is a small animal with many legs",
-         "it has eight legs and no antennae", "it has six legs and antennae"),
-        ("thunder", "lightning", "it happens during a storm",
-         "it is the sound you hear", "it is the flash you see"),
         ("a novel", "a biography", "it is a long book about a person's life",
          "the person and events are invented", "the person really lived"),
     ]
@@ -1165,21 +1284,38 @@ class QuestionGenerator:
     @classmethod
     def story_sequence(cls, grade: int, theme: str = "") -> dict:
         label, steps = random.choice(cls.SEQUENCES)
-        which = random.choice(["first", "next", "last"])
-        idx = {"first": 0, "next": 1, "last": 2}[which]
+        # "next" has no referent when nothing has happened yet - next after
+        # what? For three steps the child can be asked plainly.
+        which = random.choice(["first", "second", "last"])
+        idx = {"first": 0, "second": 1, "last": 2}[which]
+
+        # The displayed steps MUST be out of order. Printing them in sequence
+        # and then asking "what happens last?" is answered by reading the last
+        # line, so every child scored full marks without sequencing anything.
+        shown = list(steps)
+        while shown == list(steps):
+            random.shuffle(shown)
+
         opts = list(steps)
         random.shuffle(opts)
         return {
-            "question": (f"Think about {label}.  "
-                         + "  •  ".join(steps)
-                         + f"   —  What happens {which}?"),
+            # Ask, then list. On one line the question landed after three
+            # steps, so a young child met the steps before knowing the task.
+            "question": (f"Think about {label}.\n\nWhat happens {which}?\n\n"
+                         + "\n".join("\u2022  " + st for st in shown)),
             "answer": steps[idx], "options": opts,
-            "hint": "Read the steps in order and find the one asked for.",
+            "hint": "The steps are mixed up. Put them in order in your head first.",
         }
 
     @classmethod
     def compare_contrast(cls, grade: int, theme: str = "") -> dict:
-        a, b, both, only_a, only_b = random.choice(cls.COMPARISONS)
+        # `grade` is the LEVEL - 2 is 2nd. The abstract pairs join at 4th
+        # rather than replacing the concrete ones, so an older child still
+        # meets the sun and the moon now and then.
+        pool = list(cls.COMPARISONS)
+        if grade >= 4:
+            pool += cls.COMPARISONS_UPPER
+        a, b, both, only_a, only_b = random.choice(pool)
         if random.random() < 0.6:
             opts = [both, only_a, only_b, "neither one is real"]
             random.shuffle(opts)
@@ -1409,9 +1545,9 @@ class QuestionGenerator:
     #: (people, items, the word for the item kind)
     LOGIC_SETS = [
         (["Mei", "Arjun", "Sofia"], ["a cat", "a dog", "a rabbit"], "pet"),
-        (["Ada", "Leo", "Priya"],   ["red", "blue", "green"],       "favourite colour"),
+        (["Ada", "Leo", "Priya"],   ["red", "blue", "green"],       "favorite color"),
         (["Kai", "Nora", "Diego"],  ["a violin", "a drum", "a flute"], "instrument"),
-        (["Yuki", "Omar", "Lena"],  ["apples", "pears", "plums"],   "favourite fruit"),
+        (["Yuki", "Omar", "Lena"],  ["apples", "pears", "plums"],   "favorite fruit"),
         (["Sam", "Hana", "Tomas"],  ["football", "swimming", "chess"], "hobby"),
     ]
 
@@ -1529,12 +1665,12 @@ class QuestionGenerator:
         ("It rained all afternoon,", "the match was cancelled.",
          ["the sun grew hotter", "the pitch was repainted", "everyone brought sunglasses"]),
         ("Ravi forgot to water the seedling,", "it wilted.",
-         ["it grew twice as fast", "it turned into a tree", "it changed colour to blue"]),
+         ["it grew twice as fast", "it turned into a tree", "it changed color to blue"]),
         ("The power cut lasted all evening,", "we ate dinner by candlelight.",
          ["the television got louder", "the fridge froze over", "the clocks ran fast"]),
         ("Nobody had swept the leaves,", "the path became slippery.",
          ["the path grew wider", "the leaves turned green", "the wind stopped"]),
-        ("She practised the piece every day,", "she played it perfectly at the concert.",
+        ("She practiced the piece every day,", "she played it perfectly at the concert.",
          ["she forgot how to play", "the piano broke", "the concert was cancelled"]),
     ]
 
@@ -1553,12 +1689,36 @@ class QuestionGenerator:
     ]
 
     #: (setup, most likely next event, three unlikely ones)
+    #: Split by band. The originals all assume a fair amount of world knowledge
+    #: - a departures board, a surprise party - which is fine at 2nd and asks
+    #: too much at four, so the simple, one-clue setups below carry TK and K.
+    PREDICTIONS_EASY = [
+        ("Sam put on his coat and picked up his umbrella.",
+         "He is going out in the rain.",
+         ["He is going to bed.", "He is eating lunch.", "He is having a bath."]),
+        ("The dog saw his leash and ran to the door.",
+         "He is going for a walk.",
+         ["He is going to sleep.", "He is having a bath.", "He is eating dinner."]),
+        ("Mia put two slices of bread in the toaster.",
+         "She is making toast.",
+         ["She is washing the dishes.", "She is reading a book.", "She is brushing her hair."]),
+        ("The baby rubbed her eyes and yawned.",
+         "She is getting sleepy.",
+         ["She is going to run.", "She is going to sing.", "She is going to swim."]),
+        ("Leo filled a cup with water and carried it to the dry plant.",
+         "He is going to water the plant.",
+         ["He is going to eat the plant.", "He is going to paint.", "He is going to sleep."]),
+        ("Ana picked up her crayons and a clean sheet of paper.",
+         "She is going to draw.",
+         ["She is going to cook.", "She is going to swim.", "She is going to sleep."]),
+    ]
+
     PREDICTIONS = [
-        ("Mei packed her swimming costume and a towel, and set off down the lane.",
+        ("Mei packed her swimsuit and a towel, and set off down the street.",
          "She is going swimming.",
          ["She is going to bed.", "She is baking a cake.", "She is doing homework."]),
-        ("Dark clouds gathered and the wind picked up. Ben looked at the washing line.",
-         "He will bring the washing in.",
+        ("Dark clouds gathered and the wind picked up. Ben looked at the clothesline.",
+         "He will bring the laundry in.",
          ["He will plant seeds.", "He will paint the fence.", "He will wash the car."]),
         ("The candles were lit and everyone hid behind the sofa.",
          "Someone is about to have a surprise party.",
@@ -1575,7 +1735,7 @@ class QuestionGenerator:
         ("a glossary", "to explain what difficult words mean",
          ["to show where places are", "to list the author's other books", "to explain a picture"]),
         ("an index", "to show which page a topic is on",
-         ["to explain a picture", "to summarise the story", "to name the illustrator"]),
+         ["to explain a picture", "to summarize the story", "to name the illustrator"]),
         ("a heading", "to tell you what the section is about",
          ["to explain a photograph", "to define a word", "to number the pages"]),
         ("a diagram", "to show how something works or fits together",
@@ -1630,7 +1790,13 @@ class QuestionGenerator:
 
     @classmethod
     def predict_next(cls, grade: int, theme: str = "") -> dict:
-        setup, likely, wrong = random.choice(cls.PREDICTIONS)
+        # `grade` is the LEVEL - 0 covers TK and K. They get the one-clue
+        # setups; from 1st the pool opens up rather than switching over, so a
+        # 3rd grader still meets the easy ones now and then.
+        pool = list(cls.PREDICTIONS_EASY)
+        if grade >= 1:
+            pool += cls.PREDICTIONS
+        setup, likely, wrong = random.choice(pool)
         opts = [likely] + list(wrong[:3])
         random.shuffle(opts)
         return {
@@ -1664,7 +1830,9 @@ class QuestionGenerator:
             part, purpose, wrong = random.choice(cls.BOOK_PARTS)
             opts = [purpose] + list(wrong[:3])
             random.shuffle(opts)
-            return {"question": "What is %s of a book?" % part,
+            # "What is the illustrator of a book?" - the people need "Who".
+            lead = "Who is" if part in ("the author", "the illustrator") else "What is"
+            return {"question": "%s %s of a book?" % (lead, part),
                     "answer": purpose, "options": opts,
                     "hint": "Picture a book in your hands."}
         feature, purpose, wrong = random.choice(cls.TEXT_FEATURES)
@@ -2012,7 +2180,7 @@ class QuestionGenerator:
              ("ach__ve", "ie", "achieve"), ("c__ling", "ei", "ceiling"),
              ("f__ld", "ie", "field"), ("d__ceive", "e", "deceive"),
              ("th__f", "ie", "thief"), ("w__ght", "ei", "weight"),
-             ("p__ce", "ie", "piece"), ("n__ghbour", "ei", "neighbour")]
+             ("p__ce", "ie", "piece"), ("n__ghbor", "ei", "neighbor")]
 
     @classmethod
     def ie_ei_rule(cls, grade: int, theme: str = "") -> dict:
@@ -2340,9 +2508,11 @@ class QuestionGenerator:
                 everywhere = [f for fns_ in cls.GENERATORS.values() for f in fns_]
                 seen, unique = set(), []
                 for f in everywhere:
-                    n = cls._fn_name(f)
-                    if n not in seen:
-                        seen.add(n)
+                    # NB: not `n` — that is the question count parameter, and
+                    # shadowing it here made every cross-subject skill 500.
+                    fname = cls._fn_name(f)
+                    if fname not in seen:
+                        seen.add(fname)
                         unique.append(f)
                 preferred = [f for f in cls._eligible(unique, grade_id)
                              if cls._fn_name(f) in names]
