@@ -29,7 +29,8 @@ export type TrackEvent =
   | "register_success"
   | "child_added"
   | "sample_view"
-  | "pricing_view";
+  | "pricing_view"
+  | "invite_share";
 
 function sessionKey(): string | null {
   if (typeof sessionStorage === "undefined") return null;

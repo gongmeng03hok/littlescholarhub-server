@@ -2,7 +2,7 @@ import { track, useTrackView } from "../../utils/track";
 import { readPendingAssessment } from "../../utils/pendingAssessment";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
-import { useRouter, Link } from "expo-router";
+import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { colors } from "../../constants/theme";
@@ -24,7 +24,12 @@ export default function RegisterScreen() {
   const [role, setRole]         = useState<"parent" | "teacher">("parent");
   const [teacherName, setTeacherName]     = useState("");
   const [teacherSchool, setTeacherSchool] = useState("");
-  const [referralCode, setReferralCode]   = useState("");
+  // A shared invite arrives as /register?ref=CODE. Prefilling it means the
+  // recipient never has to read a code off a message and retype it - the
+  // step where most referrals are lost.
+  const params = useLocalSearchParams<{ ref?: string }>();
+  const [referralCode, setReferralCode]   = useState(
+    typeof params.ref === "string" ? params.ref.toUpperCase() : "");
   const [loading, setLoading]   = useState(false);
 
   const submit = async () => {

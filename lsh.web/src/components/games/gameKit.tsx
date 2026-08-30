@@ -4,6 +4,7 @@
  * QuestionCard uses, so gems / stars / XP keep being awarded server-side.
  */
 import { useEffect, useRef } from "react";
+import { fonts } from "../../constants/theme";
 import { Animated, Easing, View, Text, StyleSheet } from "react-native";
 import { questionsApi } from "../../api/questions";
 import { colors } from "../../constants/theme";

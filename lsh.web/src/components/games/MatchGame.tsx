@@ -7,6 +7,7 @@ import { CelebrationBurst } from "../CelebrationBurst";
 import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { GameQuestion, answerOf, textOf, recordAttempt, shuffle, Celebrate, colors } from "./gameKit";
+import { fonts } from "../../constants/theme";
 import { questionImage, type ArtContext } from "../../constants/questionImages";
 import { SpeakButton } from "../SpeakButton";
 
@@ -75,7 +76,11 @@ export function MatchGame({ questions, childId, context, onDone }: Props) {
               <TouchableOpacity key={l.key} disabled={isMatched}
                 onPress={() => setSel(l.key)}
                 style={[s.item, sel === l.key && s.itemSel, isMatched && s.itemDone]}>
-                {!!l.img && <Image source={l.img} style={s.itemImg} resizeMode="contain" />}
+                {!!l.img && (
+                  <View style={s.imgTile}>
+                    <Image source={l.img} style={s.itemImg} resizeMode="contain" />
+                  </View>
+                )}
                 <Text style={[s.itemText, isMatched && s.itemTextDone]}>{l.label}</Text>
                 {isMatched
                   ? <Text style={s.check}>✓</Text>
@@ -127,7 +132,8 @@ function tidy(t: string): string {
 const s = StyleSheet.create({
   card:  { backgroundColor: "white", borderRadius: 22, padding: 20,
            shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 12, elevation: 3 },
-  title: { fontSize: 18, fontWeight: "900", color: colors.text, textAlign: "center", marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: "700", fontFamily: fonts.kid, color: colors.text,
+           textAlign: "center", marginBottom: 18 },
   columns: { flexDirection: "row", gap: 12 },
   col:   { flex: 1, gap: 10 },
   // minHeight (not height) so a tile grows to fit however many lines the
@@ -139,14 +145,21 @@ const s = StyleSheet.create({
   itemActive: { borderColor: colors.accent },
   itemWrong:  { borderColor: colors.danger, backgroundColor: "#fdf1ef" },
   itemDone:   { borderColor: colors.success, backgroundColor: "#f0f6ee", opacity: 0.85 },
-  itemImg:    { width: 54, height: 54, borderRadius: 12 },
-  itemText:   { flex: 1, flexShrink: 1, fontSize: 13, lineHeight: 18, fontWeight: "700",
-                color: colors.text, textAlign: "center" },
+  // The picture is the question for a child who cannot read the sentence
+  // yet, so it leads. 54px made it look like a bullet point.
+  itemImg:    { width: 96, height: 96, borderRadius: 20 },
+  imgTile:    {
+    width: 112, height: 112, borderRadius: 24, marginRight: 14,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  itemText:   { flex: 1, flexShrink: 1, fontSize: 17, lineHeight: 24, fontWeight: "600",
+                fontFamily: fonts.kid, color: colors.text, letterSpacing: 0.1 },
   itemTextDone:{ color: colors.success },
   // flexShrink lets a long answer wrap inside its tile rather than spilling
   // past the rounded border.
-  answerText: { flexShrink: 1, fontSize: 20, lineHeight: 26, fontWeight: "900",
-                color: colors.text, textTransform: "capitalize", textAlign: "center" },
+  answerText: { fontSize: 22, fontWeight: "700", fontFamily: fonts.kid,
+                color: colors.text, textAlign: "center", letterSpacing: 0.2 },
   check:      { fontSize: 18, fontWeight: "900", color: colors.success },
   helper:     { textAlign: "center", marginTop: 16, fontSize: 14, fontWeight: "700", color: colors.textMuted },
 });

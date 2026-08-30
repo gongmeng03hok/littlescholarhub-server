@@ -2,6 +2,7 @@
  * Parent Dashboard — mirrors the reference portal's logged-in home:
  * Greeting · Streak · Wisdom · Recent Activity · Cultural tracks · Story teaser · Quick actions
  */
+import { ShareCard }    from "../../components/ShareCard";
 import { useEffect } from "react";
 import {
   ScrollView, View, Text, TouchableOpacity, Image,
@@ -22,7 +23,8 @@ const CORE_SUBJECTS = ["math","phonics","reading","art","story","logic","feeling
 
 export default function ParentDashboard() {
   const router  = useRouter();
-  useAuthStore(); // keep store subscribed for auth-state reactivity
+  // The family profile carries referral_code, which the invite card needs.
+  const { family } = useAuthStore();
   const { activeChild, setActiveChild, children } = useChildStore();
   const { data: childList, isRefetching, refetch } = useChildren();
 
@@ -104,6 +106,7 @@ export default function ParentDashboard() {
       {/* ── Daily Wisdom ───────────────────────────────────── */}
       <View style={s.section}>
         <WisdomCard />
+        <ShareCard code={(family as any)?.referral_code} />
       </View>
 
       {/* ── Pending assignment reminder ──────────────────────── */}

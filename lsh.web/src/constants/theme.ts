@@ -29,6 +29,9 @@ export const colors = {
 export const fonts = {
   heading: Platform.OS === "web" ? "'Fraunces', Georgia, serif" : undefined,
   body:    Platform.OS === "web" ? "'Inter', system-ui, sans-serif" : undefined,
+  /** Kid-facing screens. Rounded and chunky - the shape early-years apps
+   *  settle on, and far easier for a new reader than a grotesque. */
+  kid:     Platform.OS === "web" ? "'Fredoka', 'Nunito', system-ui, sans-serif" : undefined,
 };
 
 export const SUBJECT_META: Record<string, { icon: string; label: string; color: string; subjectId: number }> = {
