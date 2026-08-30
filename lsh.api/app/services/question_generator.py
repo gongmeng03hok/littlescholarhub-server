@@ -1490,6 +1490,557 @@ class QuestionGenerator:
             "hint": "Move each letter %d back. A comes after Z when you wrap around." % shift,
         }
 
+
+    # ── Reading strategies ──────────────────────────────────────────────────
+    #: (sentence with the target word, word, meaning, three wrong meanings)
+    CONTEXT_CLUES = [
+        ("The path was so narrow that we had to walk in single file.", "narrow",
+         "not wide", ["very long", "muddy", "steep"]),
+        ("After three days of rain the river was turbulent and dangerous.", "turbulent",
+         "rough and churning", ["frozen solid", "shallow", "clear"]),
+        ("She was reluctant to speak, and had to be asked twice.", "reluctant",
+         "unwilling", ["excited", "loud", "confused"]),
+        ("The ancient map was so fragile it tore at the corner.", "fragile",
+         "easily broken", ["colourful", "enormous", "waterproof"]),
+        ("He gave a brief answer and walked straight on.", "brief",
+         "short", ["angry", "clever", "whispered"]),
+        ("The cave was damp, and water ran down the walls.", "damp",
+         "slightly wet", ["warm", "bright", "empty"]),
+        ("Her argument was persuasive and everyone changed their mind.", "persuasive",
+         "good at convincing people", ["written down", "very quiet", "extremely long"]),
+    ]
+
+    #: (statement, is_fact)
+    FACT_OPINION = [
+        ("Water freezes at zero degrees Celsius.", True),
+        ("Winter is the best season of the year.", False),
+        ("The Nile is a river in Africa.", True),
+        ("Chocolate ice cream tastes better than vanilla.", False),
+        ("A spider has eight legs.", True),
+        ("Spiders are creepy and horrible.", False),
+        ("Our school day starts at half past eight.", True),
+        ("Homework should be banned completely.", False),
+        ("The moon orbits the Earth.", True),
+        ("Football is more exciting than swimming.", False),
+    ]
+
+    #: (cause, effect, three wrong effects)
+    CAUSE_EFFECT = [
+        ("It rained all afternoon,", "the match was cancelled.",
+         ["the sun grew hotter", "the pitch was repainted", "everyone brought sunglasses"]),
+        ("Ravi forgot to water the seedling,", "it wilted.",
+         ["it grew twice as fast", "it turned into a tree", "it changed colour to blue"]),
+        ("The power cut lasted all evening,", "we ate dinner by candlelight.",
+         ["the television got louder", "the fridge froze over", "the clocks ran fast"]),
+        ("Nobody had swept the leaves,", "the path became slippery.",
+         ["the path grew wider", "the leaves turned green", "the wind stopped"]),
+        ("She practised the piece every day,", "she played it perfectly at the concert.",
+         ["she forgot how to play", "the piano broke", "the concert was cancelled"]),
+    ]
+
+    #: (short text, the writer's purpose, three wrong purposes)
+    AUTHOR_PURPOSE = [
+        ("Mix the flour and butter, then add the eggs one at a time.",
+         "to instruct", ["to entertain", "to persuade", "to frighten"]),
+        ("You should vote for our plan because it helps every family in the town.",
+         "to persuade", ["to instruct", "to describe a process", "to tell a joke"]),
+        ("The dragon sneezed, and the whole village turned bright purple.",
+         "to entertain", ["to instruct", "to persuade", "to report facts"]),
+        ("Antarctica is the coldest continent, with an average winter temperature near -60C.",
+         "to inform", ["to entertain", "to persuade", "to give instructions"]),
+        ("Buy now and you will never regret it - our offer ends on Friday!",
+         "to persuade", ["to inform", "to entertain", "to instruct"]),
+    ]
+
+    #: (setup, most likely next event, three unlikely ones)
+    PREDICTIONS = [
+        ("Mei packed her swimming costume and a towel, and set off down the lane.",
+         "She is going swimming.",
+         ["She is going to bed.", "She is baking a cake.", "She is doing homework."]),
+        ("Dark clouds gathered and the wind picked up. Ben looked at the washing line.",
+         "He will bring the washing in.",
+         ["He will plant seeds.", "He will paint the fence.", "He will wash the car."]),
+        ("The candles were lit and everyone hid behind the sofa.",
+         "Someone is about to have a surprise party.",
+         ["Everyone is going to sleep.", "They are cleaning the house.", "A lesson is starting."]),
+        ("Ada checked her ticket, then looked up at the departures board.",
+         "She is waiting for a train or plane.",
+         ["She is cooking dinner.", "She is at the dentist.", "She is feeding a cat."]),
+    ]
+
+    #: (feature, what it is for, three wrong purposes)
+    TEXT_FEATURES = [
+        ("a caption", "to explain a picture",
+         ["to list the chapters", "to define a hard word", "to show the title"]),
+        ("a glossary", "to explain what difficult words mean",
+         ["to show where places are", "to list the author's other books", "to explain a picture"]),
+        ("an index", "to show which page a topic is on",
+         ["to explain a picture", "to summarise the story", "to name the illustrator"]),
+        ("a heading", "to tell you what the section is about",
+         ["to explain a photograph", "to define a word", "to number the pages"]),
+        ("a diagram", "to show how something works or fits together",
+         ["to list new words", "to give the author's opinion", "to number the chapters"]),
+        ("a table of contents", "to show what is in the book and where",
+         ["to explain hard words", "to describe the cover", "to thank the publisher"]),
+    ]
+
+    @classmethod
+    def context_clues(cls, grade: int, theme: str = "") -> dict:
+        sentence, word, meaning, wrong = random.choice(cls.CONTEXT_CLUES)
+        opts = [meaning] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": ("Read: \"%s\"\n\nWhat does \u201c%s\u201d most likely mean?"
+                         % (sentence, word)),
+            "answer": meaning, "options": opts,
+            "hint": "The rest of the sentence tells you, even if you have never met the word.",
+        }
+
+    @classmethod
+    def fact_or_opinion(cls, grade: int, theme: str = "") -> dict:
+        statement, is_fact = random.choice(cls.FACT_OPINION)
+        ans = "Fact" if is_fact else "Opinion"
+        return {
+            "question": "Is this a fact or an opinion?\n\n\u201c%s\u201d" % statement,
+            "answer": ans, "options": ["Fact", "Opinion"],
+            "hint": "A fact can be checked. An opinion is what somebody believes.",
+        }
+
+    @classmethod
+    def cause_effect(cls, grade: int, theme: str = "") -> dict:
+        cause, effect, wrong = random.choice(cls.CAUSE_EFFECT)
+        opts = [effect] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": "%s so what happened?" % cause,
+            "answer": effect, "options": opts,
+            "hint": "The cause comes first; the effect is what it made happen.",
+        }
+
+    @classmethod
+    def author_purpose(cls, grade: int, theme: str = "") -> dict:
+        text, purpose, wrong = random.choice(cls.AUTHOR_PURPOSE)
+        opts = [purpose] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": "Read: \"%s\"\n\nWhy did the writer write this?" % text,
+            "answer": purpose, "options": opts,
+            "hint": "Writers usually want to inform, persuade, instruct or entertain.",
+        }
+
+    @classmethod
+    def predict_next(cls, grade: int, theme: str = "") -> dict:
+        setup, likely, wrong = random.choice(cls.PREDICTIONS)
+        opts = [likely] + list(wrong[:3])
+        random.shuffle(opts)
+        return {
+            "question": "Read: \"%s\"\n\nWhat will most likely happen next?" % setup,
+            "answer": likely, "options": opts,
+            "hint": "Use the clues in the sentence, not just a guess.",
+        }
+
+    #: The parts of a book a very young child actually meets.
+    BOOK_PARTS = [
+        ("the cover", "it shows the title and a picture of what the book is about",
+         ["it lists every word in the book", "it tells you the price", "it is always blank"]),
+        ("the title", "it tells you the name of the book",
+         ["it tells you the page number", "it shows who printed it", "it is the last page"]),
+        ("the author", "it is the person who wrote the book",
+         ["the person who sells the book", "the person who reads it aloud", "the shop it came from"]),
+        ("the illustrator", "it is the person who drew the pictures",
+         ["the person who wrote the words", "the person who sold the book", "the librarian"]),
+        ("the spine", "it is the edge you see on a shelf",
+         ["the first page", "the picture on the front", "the words at the back"]),
+    ]
+
+    @classmethod
+    def text_features(cls, grade: int, theme: str = "") -> dict:
+        """Parts of a book at TK-1st; non-fiction features from 2nd.
+
+        A four-year-old learning "Parts of a Book" is learning cover, title and
+        author - not what a glossary is for.
+        """
+        if grade <= 1:
+            part, purpose, wrong = random.choice(cls.BOOK_PARTS)
+            opts = [purpose] + list(wrong[:3])
+            random.shuffle(opts)
+            return {"question": "What is %s of a book?" % part,
+                    "answer": purpose, "options": opts,
+                    "hint": "Picture a book in your hands."}
+        feature, purpose, wrong = random.choice(cls.TEXT_FEATURES)
+        opts = [purpose] + list(wrong[:3])
+        random.shuffle(opts)
+        return {"question": "In a non-fiction book, what is %s for?" % feature,
+                "answer": purpose, "options": opts,
+                "hint": "Think about what it helps a reader do."}
+
+    # ── Phonics: spelling patterns ──────────────────────────────────────────
+    ENDING_SOUNDS = {
+        "t": ["cat", "hat", "boat", "night"], "n": ["sun", "rain", "green", "moon"],
+        "p": ["cup", "map", "sheep", "jump"], "g": ["dog", "bag", "frog", "pig"],
+        "k": ["book", "duck", "milk", "rock"], "d": ["bed", "hand", "road", "bird"],
+    }
+
+    #: (short vowel word, magic-e word)
+    SILENT_E = [("cap", "cape"), ("kit", "kite"), ("hop", "hope"), ("tub", "tube"),
+                ("pin", "pine"), ("rat", "rate"), ("not", "note"), ("cub", "cube"),
+                ("man", "mane"), ("rid", "ride")]
+
+    #: (word, soft or hard, letter)
+    SOFT_CG = [("city", "soft", "c"), ("cat", "hard", "c"), ("circle", "soft", "c"),
+               ("cup", "hard", "c"), ("giant", "soft", "g"), ("goat", "hard", "g"),
+               ("gentle", "soft", "g"), ("gate", "hard", "g"), ("cycle", "soft", "c"),
+               ("gym", "soft", "g")]
+
+    COMPOUNDS = [("sun", "flower", "sunflower"), ("rain", "bow", "rainbow"),
+                 ("butter", "fly", "butterfly"), ("foot", "ball", "football"),
+                 ("book", "shelf", "bookshelf"), ("snow", "man", "snowman"),
+                 ("play", "ground", "playground"), ("tooth", "brush", "toothbrush"),
+                 ("cup", "cake", "cupcake"), ("star", "fish", "starfish")]
+
+    CONTRACTIONS = [("do not", "don't"), ("cannot", "can't"), ("it is", "it's"),
+                    ("they are", "they're"), ("I have", "I've"), ("she will", "she'll"),
+                    ("we are", "we're"), ("did not", "didn't"), ("you have", "you've"),
+                    ("is not", "isn't")]
+
+    SILENT_LETTERS = [("knee", "k"), ("write", "w"), ("lamb", "b"), ("island", "s"),
+                      ("castle", "t"), ("sign", "g"), ("hour", "h"), ("comb", "b"),
+                      ("knife", "k"), ("wrist", "w")]
+
+    @classmethod
+    def ending_sound(cls, grade: int, theme: str = "") -> dict:
+        letter = random.choice(list(cls.ENDING_SOUNDS.keys()))
+        target = random.choice(cls.ENDING_SOUNDS[letter])
+        others = [w for k, ws in cls.ENDING_SOUNDS.items() if k != letter for w in ws]
+        opts = [target] + random.sample(others, 3)
+        random.shuffle(opts)
+        return {"question": "Which word ENDS with the /%s/ sound?" % letter,
+                "answer": target, "options": opts,
+                "hint": "Say each word and listen to the very last sound."}
+
+    @classmethod
+    def silent_e(cls, grade: int, theme: str = "") -> dict:
+        short, long_ = random.choice(cls.SILENT_E)
+        others = [w for _, w in cls.SILENT_E if w != long_]
+        opts = [long_] + random.sample(others, 3)
+        random.shuffle(opts)
+        return {
+            "question": ("Magic e \u2014 adding a silent e changes the vowel sound.\n\n"
+                         "What does \u201c%s\u201d become when you add a silent e?" % short),
+            "answer": long_, "options": opts,
+            "hint": "The e stays silent but makes the first vowel say its own name.",
+        }
+
+    @classmethod
+    def soft_hard_cg(cls, grade: int, theme: str = "") -> dict:
+        word, kind, letter = random.choice(cls.SOFT_CG)
+        return {
+            "question": ("In \u201c%s\u201d, is the letter %s soft or hard?" % (word, letter)),
+            "answer": kind.capitalize(), "options": ["Soft", "Hard"],
+            "hint": "C and g go soft before e, i and y \u2014 like city and giant.",
+        }
+
+    @classmethod
+    def compound_word(cls, grade: int, theme: str = "") -> dict:
+        a, b, whole = random.choice(cls.COMPOUNDS)
+        others = [w for _, _, w in cls.COMPOUNDS if w != whole]
+        opts = [whole] + random.sample(others, 3)
+        random.shuffle(opts)
+        return {"question": "Which compound word means \u201c%s\u201d + \u201c%s\u201d?" % (a, b),
+                "answer": whole, "options": opts,
+                "hint": "A compound word is two smaller words joined together."}
+
+    @classmethod
+    def contraction(cls, grade: int, theme: str = "") -> dict:
+        full, short = random.choice(cls.CONTRACTIONS)
+        others = [c for _, c in cls.CONTRACTIONS if c != short]
+        opts = [short] + random.sample(others, 3)
+        random.shuffle(opts)
+        return {"question": "Which contraction means \u201c%s\u201d?" % full,
+                "answer": short, "options": opts,
+                "hint": "The apostrophe stands where the missing letters were."}
+
+    @classmethod
+    def silent_letter(cls, grade: int, theme: str = "") -> dict:
+        word, letter = random.choice(cls.SILENT_LETTERS)
+        others = [l for _, l in cls.SILENT_LETTERS if l != letter]
+        opts = [letter] + random.sample(list(dict.fromkeys(others)), 3)
+        random.shuffle(opts)
+        return {"question": "Which letter is SILENT in \u201c%s\u201d?" % word,
+                "answer": letter, "options": opts,
+                "hint": "Say the word aloud - one letter is written but not heard."}
+
+
+    # ── Logic and number sense ──────────────────────────────────────────────
+    ORDINALS = ["1st", "2nd", "3rd", "4th", "5th", "6th"]
+    RACERS = [["Mei", "Arjun", "Sofia", "Leo", "Ada"],
+              ["Kai", "Nora", "Diego", "Yuki", "Omar"],
+              ["Hana", "Tomas", "Priya", "Sam", "Lena"]]
+
+    #: (rule, three that fit, three that do not)
+    SORTING_RULES = [
+        ("things you can eat", ["apple", "bread", "cheese"], ["hammer", "sock", "cloud"]),
+        ("animals with four legs", ["dog", "horse", "cat"], ["bird", "fish", "snake"]),
+        ("things that float", ["cork", "leaf", "boat"], ["stone", "coin", "hammer"]),
+        ("things that are always cold", ["ice", "snow", "frost"], ["oven", "candle", "sun"]),
+        ("things with wheels", ["bus", "bicycle", "skateboard"], ["boat", "kite", "ladder"]),
+        ("things you write with", ["pencil", "pen", "chalk"], ["spoon", "brick", "shoe"]),
+        ("things that grow", ["tree", "puppy", "seed"], ["rock", "chair", "spoon"]),
+    ]
+
+    #: (statement, is_true)
+    TRUE_FALSE = [
+        ("All squares have four sides.", True),
+        ("All birds can fly.", False),
+        ("Every triangle has three corners.", True),
+        ("All animals that swim are fish.", False),
+        ("Two plus two equals four.", True),
+        ("All red things are apples.", False),
+        ("Every month has at least 28 days.", True),
+        ("All even numbers end in 2.", False),
+    ]
+
+    #: (rule, given fact, what follows, three that do not)
+    IF_THEN = [
+        ("If it rains, we stay inside.", "It is raining.", "We stay inside.",
+         ["We go outside.", "It stops raining.", "We take an umbrella outside."]),
+        ("If the light is green, the cars may go.", "The light is green.", "The cars may go.",
+         ["The cars must stop.", "The light turns red.", "The cars turn around."]),
+        ("If you finish your work, you may read.", "You finished your work.", "You may read.",
+         ["You must start again.", "You may not read.", "The work disappears."]),
+        ("If an animal is a mammal, it has a backbone.", "A whale is a mammal.",
+         "A whale has a backbone.",
+         ["A whale is a fish.", "A whale has no bones.", "All fish are mammals."]),
+        ("If the shop is shut, we come back tomorrow.", "The shop is shut.",
+         "We come back tomorrow.",
+         ["We go in anyway.", "The shop opens.", "We never come back."]),
+    ]
+
+    #: (claim, is it true of ALL or only SOME)
+    QUANTIFIERS = [
+        ("Birds have feathers.", "All"), ("Birds can swim.", "Some"),
+        ("Squares have four sides.", "All"), ("Rectangles are squares.", "Some"),
+        ("Even numbers can be divided by two.", "All"),
+        ("Numbers are bigger than ten.", "Some"),
+        ("Mammals feed their young milk.", "All"), ("Mammals live in water.", "Some"),
+    ]
+
+    FALLACIES = [
+        ("Everyone in my class has a phone, so phones must be good for you.",
+         "Popular does not mean correct",
+         ["The class is too small", "Phones are expensive", "Nobody asked the teacher"]),
+        ("It rained after I washed the car, so washing the car causes rain.",
+         "Two things happening in order does not mean one caused the other",
+         ["Cars should not be washed", "Rain is unpredictable", "The car was already clean"]),
+        ("You are wrong about the film because you are only eleven.",
+         "Attacking the person instead of the argument",
+         ["Eleven-year-olds dislike films", "The film was too long", "Age is hard to check"]),
+        ("Either we cancel sports day entirely or we ignore the weather.",
+         "Pretending there are only two choices",
+         ["Sports day is unimportant", "Weather cannot be predicted", "Everyone likes sport"]),
+    ]
+
+    @classmethod
+    def ordinal_numbers(cls, grade: int, theme: str = "") -> dict:
+        names = random.choice(cls.RACERS)[:]
+        random.shuffle(names)
+        n = 4 if grade <= 1 else 5
+        names = names[:n]
+        pos = random.randrange(n)
+        order = ",  ".join("%s %s" % (cls.ORDINALS[i], names[i]) for i in range(n))
+        if random.random() < 0.5:
+            opts = random.sample(names, min(4, n))
+            if names[pos] not in opts:
+                opts[0] = names[pos]
+            random.shuffle(opts)
+            return {"question": "The race finished:  %s\n\nWho came %s?" % (order, cls.ORDINALS[pos]),
+                    "answer": names[pos], "options": opts,
+                    "hint": "1st is the winner, then 2nd, then 3rd."}
+        opts = cls.ORDINALS[:n]
+        return {"question": "The race finished:  %s\n\nWhere did %s come?" % (order, names[pos]),
+                "answer": cls.ORDINALS[pos], "options": opts[:4] if pos < 4 else opts[-4:],
+                "hint": "Count along the finishing order."}
+
+    @classmethod
+    def sorting_rule(cls, grade: int, theme: str = "") -> dict:
+        rule, fits, nots = random.choice(cls.SORTING_RULES)
+        shown = random.sample(fits, 2)
+        answer = [f for f in fits if f not in shown][0]
+        opts = [answer] + random.sample(nots, 3)
+        random.shuffle(opts)
+        return {
+            "question": ("These belong in the same group:  %s\n\nThe rule is \u201c%s\u201d. "
+                         "Which one ALSO belongs?" % ("  \u2022  ".join(shown), rule)),
+            "answer": answer, "options": opts,
+            "hint": "Check each choice against the rule.",
+        }
+
+    @classmethod
+    def true_false_logic(cls, grade: int, theme: str = "") -> dict:
+        statement, is_true = random.choice(cls.TRUE_FALSE)
+        return {"question": "True or false?\n\n\u201c%s\u201d" % statement,
+                "answer": "True" if is_true else "False", "options": ["True", "False"],
+                "hint": "One counter-example is enough to make an \u201call\u201d statement false."}
+
+    @classmethod
+    def if_then_logic(cls, grade: int, theme: str = "") -> dict:
+        rule, given, follows, wrong = random.choice(cls.IF_THEN)
+        opts = [follows] + list(wrong[:3])
+        random.shuffle(opts)
+        return {"question": "Rule:  %s\nFact:  %s\n\nWhat must be true?" % (rule, given),
+                "answer": follows, "options": opts,
+                "hint": "Apply the rule to the fact - do not add anything of your own."}
+
+    @classmethod
+    def quantifier_logic(cls, grade: int, theme: str = "") -> dict:
+        claim, kind = random.choice(cls.QUANTIFIERS)
+        return {"question": "Is this true of ALL of them, or only SOME?\n\n\u201c%s\u201d" % claim,
+                "answer": kind, "options": ["All", "Some"],
+                "hint": "If you can think of one that does not fit, it is only some."}
+
+    @classmethod
+    def logical_fallacy(cls, grade: int, theme: str = "") -> dict:
+        claim, flaw, wrong = random.choice(cls.FALLACIES)
+        opts = [flaw] + list(wrong[:3])
+        random.shuffle(opts)
+        return {"question": "What is wrong with this reasoning?\n\n\u201c%s\u201d" % claim,
+                "answer": flaw, "options": opts,
+                "hint": "Look at whether the reason actually supports the conclusion."}
+
+    @classmethod
+    def guess_number(cls, grade: int, theme: str = "") -> dict:
+        hi = 20 if grade <= 2 else (50 if grade <= 4 else 100)
+        for _ in range(60):
+            n = random.randint(2, hi)
+            clues = []
+            clues.append(("It is an even number." if n % 2 == 0 else "It is an odd number.",
+                          lambda v, n=n: v % 2 == n % 2))
+            lo_b = max(1, n - random.randint(3, 8)); hi_b = n + random.randint(3, 8)
+            clues.append(("It is between %d and %d." % (lo_b, hi_b),
+                          lambda v, a=lo_b, b=hi_b: a < v < b))
+            d = random.choice([3, 4, 5])
+            if n % d == 0:
+                clues.append(("You can divide it by %d exactly." % d,
+                              lambda v, d=d: v % d == 0))
+            cands = [v for v in range(1, hi + 1) if all(fn(v) for _, fn in clues)]
+            if len(cands) == 1:
+                break
+        else:
+            n = 12
+            clues = [("It is an even number.", None),
+                     ("It is between 10 and 14.", None)]
+        wrong = random.sample([v for v in range(1, hi + 1) if v != n], 3)
+        opts = [str(n)] + [str(w) for w in wrong]
+        random.shuffle(opts)
+        return {
+            "question": ("Guess my number.\n\n%s\n\nWhat is it?"
+                         % "\n".join("\u2022 " + c for c, _ in clues)),
+            "answer": str(n), "options": opts,
+            "hint": "Use every clue - together they leave only one answer.",
+        }
+
+    @classmethod
+    def number_bonds(cls, grade: int, theme: str = "") -> dict:
+        total = 10 if grade <= 1 else (20 if grade <= 3 else 100)
+        part = random.randint(1, total - 1)
+        other = total - part
+        opts = list(dict.fromkeys([str(other), str(other + 1), str(max(0, other - 1)),
+                                   str(min(total, other + 2))]))
+        while len(opts) < 4:
+            opts.append(str(int(opts[-1]) + 3))
+        random.shuffle(opts)
+        return {"question": "Number bond to %d.\n\n%d and ___ make %d." % (total, part, total),
+                "answer": str(other), "options": opts[:4],
+                "hint": "Count up from %d until you reach %d." % (part, total)}
+
+    @classmethod
+    def size_sorting(cls, grade: int, theme: str = "") -> dict:
+        groups = [("an elephant", "a mouse"), ("a bus", "a bicycle"), ("a tree", "a flower"),
+                  ("the sun", "a candle"), ("a whale", "a fish"), ("a mountain", "a stone")]
+        big, small = random.choice(groups)
+        if random.random() < 0.5:
+            others = [s for b, s in groups if s != small]
+            opts = [big] + random.sample([b for b, _ in groups if b != big], 2) + [small]
+            random.shuffle(opts)
+            return {"question": "Which is BIGGER?  %s or %s?" % (big, small),
+                    "answer": big, "options": [big, small],
+                    "hint": "Picture them side by side."}
+        return {"question": "Which is SMALLER?  %s or %s?" % (big, small),
+                "answer": small, "options": [big, small],
+                "hint": "Picture them side by side."}
+
+    @classmethod
+    def prealgebra_variable(cls, grade: int, theme: str = "") -> dict:
+        x = random.randint(2, 12)
+        a = random.randint(2, 9)
+        b = random.randint(1, 20)
+        if random.random() < 0.5:
+            total = a * x + b
+            q = "Solve for x:   %dx + %d = %d" % (a, b, total)
+        else:
+            total = a * x
+            q = "Solve for x:   %dx = %d" % (a, total)
+        opts = list(dict.fromkeys([str(x), str(x + 1), str(max(1, x - 1)), str(x + 2)]))
+        while len(opts) < 4:
+            opts.append(str(int(opts[-1]) + 2))
+        random.shuffle(opts)
+        return {"question": q, "answer": str(x), "options": opts[:4],
+                "hint": "Undo the addition first, then the multiplication."}
+
+    @classmethod
+    def ratio_bar_model(cls, grade: int, theme: str = "") -> dict:
+        a, b = random.choice([(1, 2), (2, 3), (3, 4), (2, 5), (3, 5)])
+        unit = random.randint(3, 12)
+        total = (a + b) * unit
+        items = random.choice([("red beads", "blue beads"), ("apples", "pears"),
+                               ("boys", "girls"), ("stickers", "stamps")])
+        ans = a * unit
+        opts = list(dict.fromkeys([str(ans), str(b * unit), str(ans + unit), str(max(1, ans - unit))]))
+        while len(opts) < 4:
+            opts.append(str(int(opts[-1]) + unit))
+        random.shuffle(opts)
+        return {
+            "question": ("The ratio of %s to %s is %d:%d.\nThere are %d altogether.\n\n"
+                         "How many %s are there?" % (items[0], items[1], a, b, total, items[0])),
+            "answer": str(ans), "options": opts[:4],
+            "hint": "%d + %d = %d equal parts, so one part is %d \u00f7 %d."
+                    % (a, b, a + b, total, a + b),
+        }
+
+
+    IE_EI = [("bel__ve", "ie", "believe"), ("rec__ve", "ei", "receive"),
+             ("ach__ve", "ie", "achieve"), ("c__ling", "ei", "ceiling"),
+             ("f__ld", "ie", "field"), ("d__ceive", "e", "deceive"),
+             ("th__f", "ie", "thief"), ("w__ght", "ei", "weight"),
+             ("p__ce", "ie", "piece"), ("n__ghbour", "ei", "neighbour")]
+
+    @classmethod
+    def ie_ei_rule(cls, grade: int, theme: str = "") -> dict:
+        """i before e except after c - and the exceptions that break it."""
+        blank, correct, whole = random.choice([x for x in cls.IE_EI if x[1] in ("ie", "ei")])
+        opts = ["ie", "ei"]
+        return {
+            "question": ("Spelling rule - i before e, except after c.\n\n"
+                         "Which goes in the gap?   %s" % blank),
+            "answer": correct, "options": opts,
+            "hint": "The word is “%s”. After a c, it is usually ei." % whole,
+        }
+
+    @classmethod
+    def count_objects(cls, grade: int, theme: str = "") -> dict:
+        """Counting a small set - the first number skill there is."""
+        icons = {"apples": "🍎", "stars": "⭐", "balls": "⚽",
+                 "flowers": "🌷", "fish": "🐟", "cats": "🐱"}
+        name, icon = random.choice(list(icons.items()))
+        n = random.randint(1, 5 if grade <= 0 else 10)
+        opts = list(dict.fromkeys([str(n), str(n + 1), str(max(1, n - 1)), str(n + 2)]))
+        while len(opts) < 4:
+            opts.append(str(int(opts[-1]) + 1))
+        random.shuffle(opts)
+        return {"question": "How many %s?\n\n%s" % (name, " ".join([icon] * n)),
+                "answer": str(n), "options": opts[:4],
+                "hint": "Point to each one as you count."}
+
     # ── Dispatch table ────────────────────────────────────────────────────────
 
     GENERATORS = {
@@ -1500,15 +2051,23 @@ class QuestionGenerator:
                       math_place_value, math_rounding, math_compare_numbers,
                       math_money_count, math_decimal_add, math_order_of_operations,
                       math_factors_primes, math_elapsed_time, skip_counting,
-                      shape_basics],
-        "phonics":   [phonics_fill_blank, sight_word, beginning_sound,
+                      shape_basics, number_bonds, size_sorting, count_objects,
+                      prealgebra_variable, ratio_bar_model],
+        "phonics":   [ie_ei_rule, phonics_fill_blank, sight_word, beginning_sound,
                       rhyming_words, syllable_count, digraph_id,
-                      prefix_suffix, homophone_choice, root_word, synonym_antonym],
+                      prefix_suffix, homophone_choice, root_word, synonym_antonym,
+                      ending_sound, silent_e, soft_hard_cg, compound_word,
+                      contraction, silent_letter],
         # sight_word carries the early grades — a TK child cannot read a passage.
         "reading":   [sight_word, reading_comprehension, story_sequence,
-                      compare_contrast, listening_comprehension],
+                      compare_contrast, listening_comprehension,
+                      context_clues, fact_or_opinion, cause_effect,
+                      author_purpose, predict_next, text_features],
         "logic":     [logic_sequence, logic_odd_one_out, logic_pattern_grid,
-                      sudoku_cell, logic_grid, cipher_decode],
+                      sudoku_cell, logic_grid, cipher_decode,
+                      ordinal_numbers, sorting_rule, true_false_logic,
+                      if_then_logic, quantifier_logic, logical_fallacy,
+                      guess_number],
         "feelings":  [feelings_recognition, feelings_response],
         "manners":   [manners_scenario, manners_reason],
         "pinyin":    [pinyin_tone],
@@ -1548,7 +2107,39 @@ class QuestionGenerator:
         "factors_primes":    "math_factors_primes",
         "order_of_ops":      "math_order_of_operations",
         "patterns":          "logic_pattern_grid",
+        "context_clues":     "context_clues",
+        "fact_opinion":      "fact_or_opinion",
+        "cause_effect":      "cause_effect",
+        "author_purpose":    "author_purpose",
+        "prediction":        "predict_next",
+        "text_features":     "text_features",
+        "ending_sounds":     "ending_sound",
+        "silent_e":          "silent_e",
+        "soft_cg":           "soft_hard_cg",
+        "compound_words":    "compound_word",
+        "contractions":      "contraction",
+        "silent_letters":    "silent_letter",
         "sudoku":            "sudoku_cell",
+        "pinyin_tone":       "pinyin_tone",
+        "tang_poem":         "tang_poem_question",
+        "spanish_vocab":     "spanish_vocab",
+        "ordinals":          "ordinal_numbers",
+        "ie_ei":             "ie_ei_rule",
+        "counting":          "count_objects",
+        "sorting":           "sorting_rule",
+        "true_false":        "true_false_logic",
+        "if_then":           "if_then_logic",
+        "quantifiers":       "quantifier_logic",
+        "fallacies":         "logical_fallacy",
+        "guess_number":      "guess_number",
+        "number_bonds":      "number_bonds",
+        "size_sorting":      "size_sorting",
+        "prealgebra":        "prealgebra_variable",
+        "ratios":            "ratio_bar_model",
+        "homophones":        "homophone_choice",
+        "prefix_suffix":     "prefix_suffix",
+        "root_word":         "root_word",
+        "synonym_antonym":   "synonym_antonym",
         "logic_grid":        "logic_grid",
         "cipher":            "cipher_decode",
         "odd_one_out":       "logic_odd_one_out",
@@ -1597,6 +2188,18 @@ class QuestionGenerator:
         "homophone_choice":         3,   # 2nd — their/there/they're
         "synonym_antonym":          3,   # 2nd
         "root_word":                5,   # 4th — Greek and Latin roots
+        "ending_sound":             0,   # TK, straight after beginning sounds
+        "silent_e":                 2,   # 1st — magic e
+        "soft_hard_cg":             3,   # 2nd
+        "compound_word":            2,   # 1st
+        "contraction":              3,   # 2nd
+        "silent_letter":            4,   # 3rd
+        "context_clues":            3,   # 2nd
+        "fact_or_opinion":          3,   # 2nd
+        "cause_effect":             2,   # 1st
+        "author_purpose":           4,   # 3rd
+        "predict_next":             0,   # K — prediction from pictures/text
+        "text_features":            0,   # 2nd
         "skip_counting":            1,   # K — counting by 2s/5s/10s
         "shape_basics":             0,   # TK — naming shapes, counting sides
         "story_sequence":           0,   # TK — first/next/last, read aloud
@@ -1605,9 +2208,22 @@ class QuestionGenerator:
         "reading_comprehension":    2,   # 1st — a passage to read
         # logic
         "logic_pattern_grid":       0,   # shapes, no reading
-        "logic_odd_one_out":        1,
+        "logic_odd_one_out":        0,
         "logic_sequence":           2,   # number sequences
         "sudoku_cell":              2,   # 1st - 4x4 first, 6x6 from 2nd
+        "ordinal_numbers":          0,   # TK - 1st, 2nd, 3rd
+        "ie_ei_rule":               5,   # 4th - the rule and its exceptions
+        "count_objects":            0,   # TK
+        "sorting_rule":             1,   # K
+        "true_false_logic":         1,   # K
+        "if_then_logic":            2,   # 1st
+        "quantifier_logic":         3,   # 2nd - all versus some
+        "logical_fallacy":          6,   # 5th
+        "guess_number":             3,   # 2nd
+        "number_bonds":             1,   # K
+        "size_sorting":             0,   # TK
+        "prealgebra_variable":      7,   # 6th
+        "ratio_bar_model":          6,   # 5th
         "logic_grid":               3,   # 2nd - holding three facts at once
         "cipher_decode":            3,   # 2nd - needs the alphabet secure
         # social-emotional & cultural
@@ -1629,11 +2245,21 @@ class QuestionGenerator:
     #: with "cat". Anything absent here has no upper limit.
     MAX_GRADE_ID = {
         "beginning_sound":          2,   # TK-1st; past initial sounds by 2nd
+        "ending_sound":             2,   # TK-1st, same as beginning sounds
+        "predict_next":             4,   # TK-3rd; older readers infer instead
+        "silent_e":                 4,
+        "compound_word":            5,
         "rhyming_words":            2,   # TK-1st
         "listening_comprehension":  2,   # TK-1st; older children read for themselves
         "phonics_fill_blank":       4,   # TK-3rd; the patterns scale (CVC -> kn_ght)
         "sight_word":               3,   # TK-2nd
         "shape_basics":             3,   # naming shapes, counting sides
+        "size_sorting":             1,   # TK-K only
+        "count_objects":            1,   # TK-K only
+        "ordinal_numbers":          3,   # TK-2nd
+        "true_false_logic":         4,
+        "sorting_rule":             4,
+        "number_bonds":             4,
         "story_sequence":           4,   # TK-3rd
         "skip_counting":            4,   # K-3rd
         "logic_pattern_grid":       4,   # shape patterns; older get sequences
@@ -1705,6 +2331,22 @@ class QuestionGenerator:
             # 1st grade and area/perimeter at 3rd. Keep whichever is eligible.
             names = [want] if isinstance(want, str) else list(want)
             preferred = [f for f in pool if cls._fn_name(f) in names]
+
+            if not preferred:
+                # The generator exists but lives under a different subject.
+                # "Greek & Latin Roots" is filed as reading while root_word is
+                # a phonics generator; the title is the better signal, so look
+                # across every pool rather than dropping the skill.
+                everywhere = [f for fns_ in cls.GENERATORS.values() for f in fns_]
+                seen, unique = set(), []
+                for f in everywhere:
+                    n = cls._fn_name(f)
+                    if n not in seen:
+                        seen.add(n)
+                        unique.append(f)
+                preferred = [f for f in cls._eligible(unique, grade_id)
+                             if cls._fn_name(f) in names]
+
             if preferred:
                 pool = preferred
 

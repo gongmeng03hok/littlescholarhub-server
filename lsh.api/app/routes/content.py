@@ -212,7 +212,64 @@ _SKILL_PATTERNS = [
     (r"word problem",                                           "word_problems"),
     (r"factors?\\b|primes?\\b|prime number",                                           "factors_primes"),
     (r"order of operation",                                     "order_of_ops"),
-    (r"spelling pattern|word pattern",                          ""),
+    (r"i before e|ie or ei",                                     "ie_ei"),
+    (r"spelling pattern|word pattern",                          "ie_ei"),
+    # Skills the generators already cover; these titles simply were not matched.
+    (r"prefix|suffix|affix",                                    "prefix_suffix"),
+    (r"\broots?\b|greek . latin|greek and latin|word origin|where words come from|etymolog",
+                                                                "root_word"),
+    (r"homophone|commonly confused|confusing word",             "homophones"),
+    (r"synonym|antonym|opposite word",                          "synonym_antonym"),
+    (r"beginning.{0,6}middle.{0,6}end|retell the story|story order|sequenc",
+                                                                "sequences"),
+    (r"what doesn.?t belong|which one is different|same or different|odd one",
+                                                                "odd_one_out"),
+    (r"deductive reasoning|logic puzzle|who owns",              "logic_grid"),
+    (r"what comes next",                                        "patterns"),
+    (r"multisyllab|word chunking|word stress",                  "syllables"),
+    # Reading strategies
+    # Logic and number sense
+    (r"ordinal|1st, 2nd, 3rd",                                  "ordinals"),
+    (r"sorting by|sort by|same or different",                   "sorting"),
+    (r"true or false",                                          "true_false"),
+    (r"if.then|if then",                                        "if_then"),
+    (r"true for all|all or some",                               "quantifiers"),
+    (r"logical fallac|faulty reasoning",                        "fallacies"),
+    (r"guess my number|mystery number",                         "guess_number"),
+    (r"number bond",                                            "number_bonds"),
+    (r"big and small|bigger or smaller|size sorting",           "size_sorting"),
+    (r"pre.algebra|variable|solve for x|algebra",               "prealgebra"),
+    (r"ratio|proportion|bar model",                             "ratios"),
+    # Cultural tracks - the generators existed, the patterns did not
+    (r"tone|pinyin|声调",                                     "pinyin_tone"),
+    (r"tang shi|tang poem|唐诗|poem",                                  "tang_poem"),
+    (r"primeras palabras|spanish word|vocabulario|palabras",    "spanish_vocab"),
+    (r"context clue",                                           "context_clues"),
+    (r"fact or opinion|fact vs|fact and opinion",               "fact_opinion"),
+    (r"cause . effect|cause and effect",                        "cause_effect"),
+    (r"author.?s purpose|author.?s word choice|author.?s craft", "author_purpose"),
+    (r"predict|picture walk|what happens next",                 "prediction"),
+    (r"text feature|parts of a book|nonfiction text",           "text_features"),
+    (r"picture clue",                                           "prediction"),
+    (r"who, what, where|wh.? question",                         "comprehension"),
+    (r"making inference|inferen",                               "comprehension"),
+    (r"theme vs|theme and topic|theme . tone|main idea",        "comprehension"),
+    # Phonics patterns
+    (r"ending sound|final sound|last sound",                    "ending_sounds"),
+    (r"silent e|magic e",                                       "silent_e"),
+    (r"soft c|soft g|hard c|hard g",                            "soft_cg"),
+    (r"compound word",                                          "compound_words"),
+    (r"contraction",                                            "contractions"),
+    (r"silent letter",                                          "silent_letters"),
+    (r"spelling pattern|i before e",                            "silent_letters"),
+    # Social-emotional: the banded banks already cover these concepts
+    (r"calm.down|breathing|self.regulat|trigger|big feeling|how do you feel|what makes me feel|zones of regulation",
+                                                                "feelings"),
+    (r"empathy|seeing both sides|conflict resolution|peer pressure|self.esteem|problem size|kind words",
+                                                                "feelings"),
+    (r"kind or unkind|good listener|sharing|taking turns|saying sorry|good sport|"
+     r"etiquette|including others|respectful|respecting|handling mistakes|manners",
+                                                                "manners"),
     (r"sudoku",                                                 "sudoku"),
     (r"logic grid",                                             "logic_grid"),
     (r"code break|cipher|secret code",                          "cipher"),
@@ -277,9 +334,16 @@ def _decorate_worksheet(r: dict) -> dict:
     # The skill the title promises, threaded to the generator by the client.
     r["skill_key"] = _skill_from_title(r.get("title"))
 
+    # A tracing sheet is a pencil-and-paper exercise. There is nothing to answer
+    # on a screen, so it must never reach the question player - "Trace Letters
+    # A-Z" was being served phonics questions.
+    title_l = (r.get("title") or "").lower()
+    is_tracing = title_l.startswith("trace ") or " tracing" in title_l
+
     r["is_demo"] = bool(
         r.get("content_type") in DEMO_CONTENT_TYPES
         or r.get("subject") in NO_QUESTION_SUBJECTS
+        or is_tracing
     )
     return r
 
