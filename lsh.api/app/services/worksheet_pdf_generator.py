@@ -1442,12 +1442,272 @@ def _draw_butterfly():
         "Draw & Color · Kindergarten")
 
 
-def _draw_your_family():
-    return _draw_your_own("Draw Your Family",
-        ["Families come in all shapes and sizes — big, small, and everything in between.",
-         "Try to include everyone who lives in your home, even pets!",
-         "Label each person's name under their picture."],
-        "Draw & Color · Kindergarten")
+# ── Family figures ─────────────────────────────────────────────────────────
+# Open outlines, no fill, drawn in a local 100x150 box so they can be placed
+# and scaled anywhere. Stroke weight is deliberately heavy: a crayon held by a
+# five-year-old is blunt, and thin guide lines disappear under it.
+
+def _arc(cx, cy, rx, ry, a0, a1, steps=18):
+    """Flat [x1,y1,x2,y2,...] along an ellipse arc, for PolyLine."""
+    import math
+    pts = []
+    for i in range(steps + 1):
+        t = math.radians(a0 + (a1 - a0) * i / float(steps))
+        pts += [cx + rx * math.cos(t), cy + ry * math.sin(t)]
+    return pts
+
+
+def _figure(kind, ink, lw=2.4):
+    """One family member as a reportlab Group in a 100x150 local box."""
+    from reportlab.graphics.shapes import Group, Circle, Ellipse, Rect, Line, PolyLine, Polygon
+
+    g = Group()
+    O = dict(strokeColor=ink, strokeWidth=lw, fillColor=None)
+    SOLID = dict(strokeColor=ink, strokeWidth=0, fillColor=ink)
+
+    adult = kind in ("mommy", "daddy", "grandma", "grandpa")
+    baby = kind == "baby"
+
+    # scale: babies short, children mid, adults tall
+    hy = 118 if adult else (108 if not baby else 96)      # head centre y
+    hr = 20 if adult else (19 if not baby else 18)        # head radius
+    body_top = hy - hr - 2
+    body_h = 52 if adult else (42 if not baby else 30)
+    body_w = 40 if adult else (34 if not baby else 32)
+
+    # ── head ──
+    g.add(Circle(50, hy, hr, **O))
+
+    # ── hair, the thing that actually tells them apart ──
+    if kind == "mommy":
+        # One continuous arc from below the right ear, over the top, to below
+        # the left. Two straight side strands read as headphones.
+        g.add(PolyLine(_arc(50, hy, hr + 4, hr + 4, -35, 215, 28), **O))
+    elif kind == "daddy":
+        g.add(PolyLine(_arc(50, hy + 2, hr + 2, hr + 3, 15, 165), **O))
+    elif kind == "grandma":
+        g.add(PolyLine(_arc(50, hy, hr + 3, hr + 3, -10, 190, 24), **O))
+        g.add(Circle(50, hy + hr + 9, 7, **O))                 # bun
+    elif kind == "grandpa":
+        g.add(PolyLine(_arc(50 - hr + 4, hy + 6, 7, 6, 30, 170), **O))
+        g.add(PolyLine(_arc(50 + hr - 4, hy + 6, 7, 6, 10, 150), **O))
+    elif kind == "sister":
+        g.add(PolyLine(_arc(50, hy, hr + 3, hr + 3, -15, 195, 24), **O))
+        # Bunches sit at temple height. At eye level they read as ear cups.
+        g.add(Circle(50 - hr - 4, hy + hr * 0.62, 6.5, **O))
+        g.add(Circle(50 + hr + 4, hy + hr * 0.62, 6.5, **O))
+    elif kind == "brother":
+        g.add(Polygon([50 - 14, hy + hr - 3, 50 - 7, hy + hr + 7,
+                       50, hy + hr - 2, 50 + 7, hy + hr + 8,
+                       50 + 14, hy + hr - 4], **O))            # spikes
+    elif baby:
+        g.add(PolyLine(_arc(50, hy + hr - 1, 5, 7, -20, 200), **O))   # one curl
+
+    # ── face: eyes and a smile, left open to color ──
+    g.add(Circle(50 - 7, hy + 3, 2.1, **SOLID))
+    g.add(Circle(50 + 7, hy + 3, 2.1, **SOLID))
+    g.add(PolyLine(_arc(50, hy + 2, 8, 7, 200, 340), **O))
+
+    if kind in ("grandma", "grandpa"):
+        # Wider apart and smaller than the first attempt, where two r=6 rings
+        # around the eyes met in the middle and read as an owl.
+        g.add(Circle(50 - 8, hy + 3, 5, **O))
+        g.add(Circle(50 + 8, hy + 3, 5, **O))
+        g.add(Line(50 - 3, hy + 3, 50 + 3, hy + 3, **O))
+
+    # ── body ──
+    if kind in ("mommy", "sister", "grandma"):                  # dress
+        g.add(Polygon([50 - body_w * 0.32, body_top,
+                       50 + body_w * 0.32, body_top,
+                       50 + body_w * 0.60, body_top - body_h,
+                       50 - body_w * 0.60, body_top - body_h], **O))
+    elif baby:                                                  # romper
+        g.add(Rect(50 - body_w / 2.0, body_top - body_h, body_w, body_h,
+                   rx=12, ry=12, **O))
+    else:
+        g.add(Rect(50 - body_w / 2.0, body_top - body_h, body_w, body_h,
+                   rx=7, ry=7, **O))
+
+    # ── arms ──
+    ay = body_top - body_h * 0.28
+    g.add(PolyLine([50 - body_w / 2.0, ay, 50 - body_w / 2.0 - 13, ay - 11], **O))
+    g.add(PolyLine([50 + body_w / 2.0, ay, 50 + body_w / 2.0 + 13, ay - 11], **O))
+
+    # ── legs ──
+    ly = body_top - body_h
+    leg = 26 if adult else (20 if not baby else 12)
+    g.add(PolyLine([50 - 9, ly, 50 - 9, ly - leg], **O))
+    g.add(PolyLine([50 + 9, ly, 50 + 9, ly - leg], **O))
+    g.add(PolyLine([50 - 9, ly - leg, 50 - 16, ly - leg], **O))   # feet
+    g.add(PolyLine([50 + 9, ly - leg, 50 + 16, ly - leg], **O))
+
+    return g
+
+
+#: Local-box y of the very top of each figure (hair included). The box is 150
+#: tall but nobody fills it: a baby tops out at 122, a grandmother's bun at 154.
+#: Connectors need this, or they end inside a child's head.
+_FIG_TOP = {"mommy": 146, "daddy": 144, "grandma": 154, "grandpa": 146,
+            "sister": 140, "brother": 137, "baby": 122}
+
+
+def _fig_top(kind, y, scale):
+    """Absolute y of the top of this figure's head."""
+    return y + _FIG_TOP.get(kind, 146) * scale
+
+
+def _label_bottom(y, age_line=False):
+    """Absolute y below the whole name / age / label stack."""
+    return y - (35 if age_line else 22)
+
+
+def _member(d, kind, label, x, y, scale, ink, name_line=True, age_line=False):
+    """Place one figure at (x, y) with a writing line and its label."""
+    from reportlab.graphics.shapes import Group, Line, String
+
+    g = _figure(kind, ink, lw=2.6 if scale >= 0.9 else 2.2)
+    g.transform = (scale, 0, 0, scale, x, y)
+    d.add(g)
+
+    w = 100 * scale
+    cx = x + w / 2.0
+    ty = y - 6
+    if name_line:
+        d.add(Line(cx - w * 0.52, ty, cx + w * 0.52, ty,
+                   strokeColor=ink, strokeWidth=1.1, strokeDashArray=[3, 3]))
+        ty -= 13
+    if age_line:
+        d.add(Line(cx - w * 0.36, ty, cx + w * 0.36, ty,
+                   strokeColor=ink, strokeWidth=1.1, strokeDashArray=[3, 3]))
+        ty -= 13
+    d.add(String(cx, ty, label, fontName="Kalam", fontSize=10,
+                 fillColor=ink, textAnchor="middle"))
+
+
+def _draw_your_family(grade=None):
+    """A family tree to trace, color and label - banded by age.
+
+    Was a blank dashed box with an ellipse in it. A child asked to draw their
+    family needs somewhere to start, and an outline they can color is the
+    thing a 5-year-old can finish; the tree structure is what makes it a
+    lesson rather than free drawing.
+    """
+    from reportlab.platypus import Paragraph, Spacer
+    from reportlab.graphics.shapes import Drawing, Line, String
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+
+    g = 1 if grade is None else int(grade)
+    INK = colors.HexColor("#4c46b8")
+
+    if g <= 1:
+        sub = "Trace each person, color them in, and write their name."
+    elif g <= 3:
+        sub = "Color your family tree, then write everyone's name."
+    else:
+        sub = "Complete your family tree: color it, then add each name and age."
+
+    buf, doc, story, styles = _doc("My Family Tree", sub)
+
+    W = 6.9 * inch
+
+    # ── TK and K: three big figures in a row ──────────────────────────────
+    if g <= 1:
+        d = Drawing(W, 2.5 * inch)
+        sc = 1.15
+        slots = [("mommy", "Grown-up"), ("brother", "Me"), ("baby", "Baby")]
+        gap = W / 3.0
+        for i, (kind, label) in enumerate(slots):
+            _member(d, kind, label, gap * i + (gap - 100 * sc) / 2.0,
+                    0.42 * inch, sc, INK)
+        story.append(d)
+
+    # ── 1st-2nd: parents joined, children below ───────────────────────────
+    elif g <= 3:
+        H = 4.6 * inch
+        d = Drawing(W, H)
+        ps, ks = 0.78, 0.68
+        kid_y, bar_y, par_y = 26, 150, 205
+
+        for i, (kind, label) in enumerate([("mommy", "Mommy"), ("daddy", "Daddy")]):
+            cx = W * (0.30 + 0.40 * i)
+            _member(d, kind, label, cx - 100 * ps / 2.0, par_y, ps, INK)
+            d.add(Line(cx, _label_bottom(par_y) - 5, cx, bar_y,
+                       strokeColor=INK, strokeWidth=1.6))
+
+        d.add(Line(W * 0.30, bar_y, W * 0.70, bar_y, strokeColor=INK, strokeWidth=1.6))
+
+        for i, (kind, label) in enumerate([("sister", "Sister"), ("brother", "Brother"),
+                                           ("baby", "Baby")]):
+            cx = W * (0.18 + 0.32 * i)
+            _member(d, kind, label, cx - 100 * ks / 2.0, kid_y, ks, INK)
+            d.add(Line(cx, bar_y, cx, _fig_top(kind, kid_y, ks) + 5,
+                       strokeColor=INK, strokeWidth=1.6))
+        story.append(d)
+
+    # ── 3rd and up: three generations, name and age ───────────────────────
+    else:
+        H = 6.3 * inch
+        d = Drawing(W, H)
+        sc = 0.60
+        gp_y, gp_bar, par_y, sib_bar, kid_y = 348, 296, 200, 150, 42
+        gx = [W * (0.12 + 0.253 * i) for i in range(4)]
+
+        for i, (kind, label) in enumerate([("grandma", "Grandma"), ("grandpa", "Grandpa"),
+                                           ("grandma", "Grandma"), ("grandpa", "Grandpa")]):
+            _member(d, kind, label, gx[i] - 100 * sc / 2.0, gp_y, sc, INK, age_line=True)
+            d.add(Line(gx[i], _label_bottom(gp_y, True) - 5, gx[i], gp_bar,
+                       strokeColor=INK, strokeWidth=1.5))
+        for pair in (0, 2):
+            d.add(Line(gx[pair], gp_bar, gx[pair + 1], gp_bar,
+                       strokeColor=INK, strokeWidth=1.5))
+
+        px = [W * 0.315, W * 0.685]
+        for i, (kind, label) in enumerate([("mommy", "Mommy"), ("daddy", "Daddy")]):
+            _member(d, kind, label, px[i] - 100 * sc / 2.0, par_y, sc, INK, age_line=True)
+            # down from the grandparents' bar to the top of this parent's head
+            mid_x = (gx[2 * i] + gx[2 * i + 1]) / 2.0
+            d.add(Line(mid_x, gp_bar, mid_x, gp_bar - 14, strokeColor=INK, strokeWidth=1.5))
+            d.add(Line(mid_x, gp_bar - 14, px[i], gp_bar - 14, strokeColor=INK, strokeWidth=1.5))
+            d.add(Line(px[i], gp_bar - 14, px[i], _fig_top(kind, par_y, sc) + 5,
+                       strokeColor=INK, strokeWidth=1.5))
+            d.add(Line(px[i], _label_bottom(par_y, True) - 5, px[i], sib_bar,
+                       strokeColor=INK, strokeWidth=1.5))
+
+        d.add(Line(px[0], sib_bar, px[1], sib_bar, strokeColor=INK, strokeWidth=1.5))
+
+        for i, (kind, label) in enumerate([("sister", "Sister"), ("brother", "Me"),
+                                           ("baby", "Baby")]):
+            cx = W * (0.20 + 0.30 * i)
+            _member(d, kind, label, cx - 100 * sc / 2.0, kid_y, sc, INK, age_line=True)
+            d.add(Line(cx, sib_bar, cx, _fig_top(kind, kid_y, sc) + 5,
+                       strokeColor=INK, strokeWidth=1.5))
+        story.append(d)
+
+    story.append(Spacer(1, 10))
+    tips = {
+        0: ["Color each person the way they really look.",
+            "Write their name on the line.",
+            "Families come in every shape and size - draw yours."],
+        2: ["Color everyone in, then write each name on the dotted line.",
+            "Not everyone has the same family - cross out anyone you do not have, and add anyone missing.",
+            "Draw your pets in too!"],
+        4: ["Write each person's name on the first line and their age on the second.",
+            "Add anyone who is missing, and cross out any box you do not need.",
+            "Ask a grown-up about the oldest person on your tree - where were they born?"],
+    }
+    key = 0 if g <= 1 else (2 if g <= 3 else 4)
+    story.append(Paragraph("Things to try:", ParagraphStyle(
+        "h", parent=styles["Heading3"], fontSize=13, spaceAfter=6)))
+    for t in tips[key]:
+        story.append(Paragraph("\u2022  " + t, ParagraphStyle(
+            "f", parent=styles["Normal"], fontSize=11.5, leading=17, spaceAfter=3)))
+
+    band = {0: "TK - Kindergarten", 2: "Grade 1-2", 4: "Grade 3 and up"}[key]
+    _footer(story, styles, "Draw & Color \u00b7 " + band)
+    doc.build(story)
+    return buf.getvalue()
 
 
 def _draw_rainbow():
@@ -5158,19 +5418,45 @@ _RENDERERS = {
     "checklist":         _checklist,
     "word_match_table":  _word_match_table,
     "draw_your_own":     _draw_your_own,
+    # Takes `grade`; render_from_content_data passes it when the row has one.
+    "family_tree":       _draw_your_family,
 }
 
 
-def render_from_content_data(content_data_json: str) -> bytes:
+def render_from_content_data(content_data_json: str,
+                             grade: int | None = None) -> bytes:
     """content_data_json: the Worksheets.content_data column value —
-    {"renderer": "<one of _RENDERERS>", "params": {...kwargs for that renderer}}."""
+    {"renderer": "<one of _RENDERERS>", "params": {...kwargs for that renderer}}.
+
+    A renderer that bands its layout by age declares `grade`; it is passed
+    only to those, so the existing renderers keep their signatures.
+    """
+    import inspect
     payload = json.loads(content_data_json)
-    return _RENDERERS[payload["renderer"]](**payload["params"])
+    fn = _RENDERERS[payload["renderer"]]
+    params = dict(payload.get("params") or {})
+    try:
+        if "grade" in inspect.signature(fn).parameters:
+            params.setdefault("grade", grade)
+    except (TypeError, ValueError):
+        pass
+    return fn(**params)
 
 
-def generate(key: str, content_data: str | None = None) -> bytes:
+def generate(key: str, content_data: str | None = None,
+             grade: int | None = None) -> bytes:
     """Raises KeyError if the generator key isn't registered (and no
     content_data was supplied as an alternative source)."""
     if content_data:
-        return render_from_content_data(content_data)
-    return GENERATORS[key]()
+        return render_from_content_data(content_data, grade=grade)
+    fn = GENERATORS[key]
+    # Most generators take no arguments. The ones that band their layout by
+    # age declare `grade`, so pass it only where it is wanted rather than
+    # changing 200 signatures.
+    try:
+        import inspect
+        if "grade" in inspect.signature(fn).parameters:
+            return fn(grade=grade)
+    except (TypeError, ValueError):
+        pass
+    return fn()

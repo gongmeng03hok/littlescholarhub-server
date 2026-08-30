@@ -478,14 +478,15 @@ def worksheet_pdf(ws_id: int):
     from services.worksheet_pdf_generator import generate as generate_pdf
 
     row = qry(
-        "SELECT worksheet_id, title, pdf_generator_key, content_data FROM dbo.Worksheets WHERE worksheet_id=?",
+        "SELECT worksheet_id, title, pdf_generator_key, content_data, grade_id FROM dbo.Worksheets WHERE worksheet_id=?",
         (ws_id,), fetch="one"
     )
     if not row or not row.get("pdf_generator_key"):
         return jsonify({"error": "No generated PDF available for this worksheet"}), 404
 
     try:
-        pdf_bytes = generate_pdf(row["pdf_generator_key"], row.get("content_data"))
+        pdf_bytes = generate_pdf(row["pdf_generator_key"], row.get("content_data"),
+                                 grade=row.get("grade_id"))
     except KeyError:
         return jsonify({"error": "Unknown PDF generator"}), 500
     except Exception as exc:
