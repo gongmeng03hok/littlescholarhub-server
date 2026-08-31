@@ -6,7 +6,7 @@ GET  /<child_id>/chart — last 7-day activity for chart
 """
 
 from datetime import datetime, date, timedelta
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, current_app
 from utils.db import qry, child_in_family
 from utils.auth import require_auth
 from services.badge_service import get_child_badges, evaluate_and_award
@@ -102,7 +102,18 @@ def log_session():
             (child_id, duration, child_id, duration), fetch="exec"
         )
     except Exception:
-        pass
+        # Was a bare pass. A session that silently fails to log is a week the
+        # parent never sees.
+        current_app.logger.exception(
+            "session log FAILED for child_id=%s", child_id)
+
+    # Streak badges. evaluate_and_award was imported for exactly this and
+    # never called, so streak_3 / streak_7 / streak_30 could not be earned.
+    try:
+        evaluate_and_award(child_id, "session_log")
+    except Exception:
+        current_app.logger.exception(
+            "badge evaluation failed for child_id=%s", child_id)
 
     return jsonify({"ok": True})
 

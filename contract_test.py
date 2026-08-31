@@ -17,8 +17,11 @@ BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:5001").rstrip("/
 fails, checks = [], [0]
 
 
-def get(path):
-    req = urllib.request.Request(BASE + path, headers={"Accept": "application/json"})
+def get(path, token=None):
+    headers = {"Accept": "application/json"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(BASE + path, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as r:
         return r.getcode(), json.loads(r.read().decode("utf-8"))
 
@@ -350,21 +353,55 @@ def c_progress_stored():
         if not child_id:
             return False, "child not created"
 
-        _c, qs = get("/api/questions/generate?subject=math&grade=2&count=1")
-        q = (qs.get("questions") or [{}])[0]
-        post("/api/questions/attempt", {
-            "child_id": child_id,
-            "given_answer": q.get("correct_answer"),
-            "correct_answer": q.get("correct_answer"),
-            "question_text": q.get("question_text"),
-            "options": q.get("options"), "time_sec": 5,
-        }, token)
+        # Play a session: four right, two wrong, then log twelve minutes -
+        # exactly what the practice screen does.
+        RIGHT, WRONG, MINUTES = 4, 2, 12
+        _c, qs = get("/api/questions/generate?subject=math&grade=2&count=%d"
+                     % (RIGHT + WRONG))
+        for i, q in enumerate((qs.get("questions") or [])):
+            post("/api/questions/attempt", {
+                "child_id": child_id,
+                "given_answer": q.get("correct_answer") if i < RIGHT else "wrong",
+                "correct_answer": q.get("correct_answer"),
+                "question_text": q.get("question_text"),
+                "options": q.get("options"), "time_sec": 6,
+            }, token)
+        post("/api/progress/log",
+             {"child_id": child_id, "subject_id": 3, "duration_min": MINUTES}, token)
 
+        # Now read it back the way each portal does.
         with app.test_request_context():
             rows = qry("SELECT attempt_id FROM dbo.QuestionAttempts WHERE child_id=?",
                        (child_id,))
-        if not rows:
-            return False, "attempt returned 200 but NOTHING was stored"
+        if len(rows) != RIGHT + WRONG:
+            return False, ("stored %d of %d attempts"
+                           % (len(rows), RIGHT + WRONG))
+
+        _c, prog = get("/api/progress/%d" % child_id, token)
+        weekly = (prog or {}).get("weekly") or {}
+        if (weekly.get("mins") or 0) != MINUTES:
+            return False, ("parent weekly view shows %s minutes, expected %d"
+                           % (weekly.get("mins"), MINUTES))
+        if ((prog or {}).get("streak") or {}).get("current_streak", 0) < 1:
+            return False, "streak did not start"
+
+        _c, acts = get("/api/progress/%d/activities" % child_id, token)
+        quiz = (acts or {}).get("quiz_attempts") or []
+        if len(quiz) != RIGHT + WRONG:
+            return False, ("activity feed lists %d of %d attempts"
+                           % (len(quiz), RIGHT + WRONG))
+        if len([a for a in quiz if a.get("is_correct")]) != RIGHT:
+            return False, "activity feed miscounts correct answers"
+
+        _c, gam = get("/api/gamification/profile/%d" % child_id, token)
+        if not ((gam or {}).get("xp") or (gam or {}).get("total_xp")):
+            return False, "no XP awarded for correct answers"
+
+        _c, badges = get("/api/progress/%d/badges" % child_id, token)
+        blist = badges if isinstance(badges, list) else (badges or {}).get("badges") or []
+        if not blist:
+            return False, "no badge awarded after a full session"
+
         return True, ""
     finally:
         try:
@@ -388,7 +425,7 @@ check("age bands: no TK material for older children", c_age_bands)
 check("every subject x grade returns questions (48 cells)", c_no_empty_cells)
 check("no published worksheet 500s when opened", c_no_500s)
 check("every scene-art rule still matches a live question", c_scene_art)
-check("a new family's progress is actually stored", c_progress_stored)
+check("progress saves AND loads across every portal view", c_progress_stored)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 if fails:

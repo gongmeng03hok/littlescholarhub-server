@@ -12,6 +12,7 @@ from utils.db import qry, child_in_family, get_db
 from utils.auth import require_auth
 from services.question_generator import QuestionGenerator
 from services.gamification_service import award_reward
+from services.badge_service import evaluate_and_award
 
 questions_bp = Blueprint("questions", __name__)
 
@@ -102,6 +103,14 @@ def record_attempt():
     # Gamification: reward correct answers with XP (drives levels + badges). DB-safe.
     if is_correct:
         award_reward(child_id, gems=2, xp=10, coins=1)
+
+    # Badges. Without this nothing ever evaluated them on an answer, so
+    # first_sheet - which needs a single attempt - never fired across 47 of
+    # them. Awarding must never break answering, hence the guard.
+    try:
+        evaluate_and_award(child_id, "attempt")
+    except Exception:
+        current_app.logger.exception("badge evaluation failed for child_id=%s", child_id)
 
     return jsonify({"is_correct": is_correct,
                     "correct_answer": body.get("correct_answer"),

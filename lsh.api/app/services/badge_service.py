@@ -18,6 +18,11 @@ BADGE_RULES = {
     "streak_7":    lambda stats: stats.get("current_streak", 0) >= 7,
     "xp_100":      lambda stats: stats.get("total_xp", 0) >= 100,
     "xp_500":      lambda stats: stats.get("total_xp", 0) >= 500,
+    # These four are in dbo.Badges but had no rule, so nothing checked them.
+    "xp_1000":     lambda stats: stats.get("total_xp", 0) >= 1000,
+    "level_5":     lambda stats: stats.get("level", 0) >= 5,
+    "level_10":    lambda stats: stats.get("level", 0) >= 10,
+    "streak_30":   lambda stats: stats.get("current_streak", 0) >= 30,
     # Generic, cross-subject achievements (any of the 9 subjects, not just math)
     "first_worksheet":         lambda stats: stats.get("worksheet_viewed", False),
     "first_culture_worksheet": lambda stats: stats.get("cultural_worksheet_viewed", False),
@@ -74,12 +79,42 @@ def evaluate_and_award(child_id: int, event_type: str, event_meta: dict = None) 
         if event_meta.get("language_switched"):
             stats["language_switched"] = True
 
-    elif event_type == "session_log":
+    elif event_type in ("session_log", "attempt"):
         streak = qry(
             "SELECT current_streak FROM dbo.Streaks WHERE child_id=?",
             (child_id,), fetch="one"
         ) or {}
         stats["current_streak"] = streak.get("current_streak", 0)
+
+        game = qry(
+            "SELECT total_xp, level FROM dbo.ChildGameStats WHERE child_id=?",
+            (child_id,), fetch="one"
+        ) or {}
+        stats["total_xp"] = game.get("total_xp") or 0
+        stats["level"] = game.get("level") or 0
+
+        # One round trip for the attempt-shaped stats rather than five.
+        row = qry(
+            "SELECT "
+            " (SELECT COUNT(*) FROM dbo.QuestionAttempts WHERE child_id=?) AS total_attempts,"
+            " (SELECT COUNT(*) FROM dbo.QuestionAttempts WHERE child_id=?"
+            "   AND CAST(attempted_at AS DATE)=CAST(GETDATE() AS DATE)) AS today_total,"
+            " (SELECT COUNT(*) FROM dbo.QuestionAttempts WHERE child_id=? AND is_correct=1"
+            "   AND CAST(attempted_at AS DATE)=CAST(GETDATE() AS DATE)) AS today_correct,"
+            " (SELECT COUNT(*) FROM dbo.QuestionAttempts WHERE child_id=? AND is_correct=1"
+            "   AND time_sec IS NOT NULL AND time_sec <= 10) AS fast_correct,"
+            " (SELECT COUNT(DISTINCT CAST(session_date AS DATE)) FROM dbo.SessionLogs"
+            "   WHERE child_id=? AND session_date >= CAST(DATEADD(day,-7,GETDATE()) AS DATE))"
+            "   AS days_this_week",
+            (child_id,) * 5, fetch="one"
+        ) or {}
+        stats["total_attempts"] = row.get("total_attempts") or 0
+        # A perfect day needs enough answers to mean something; one correct
+        # answer is not a perfect day.
+        stats["day_perfect"] = ((row.get("today_total") or 0) >= 5
+                                and row.get("today_correct") == row.get("today_total"))
+        stats["fast_correct_5"] = (row.get("fast_correct") or 0) >= 5
+        stats["days_this_week"] = row.get("days_this_week") or 0
 
     elif event_type == "homework_submission":
         stats["homework_scan_count"] = event_meta.get("scan_count", 0)
