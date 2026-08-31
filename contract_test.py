@@ -240,6 +240,140 @@ def c_no_500s():
     return (not bad), bad[:8]
 
 
+# ── a new family's progress actually reaches the database ──────────────────
+# The endpoint answers 200 with is_correct whether or not the row lands, so
+# only reading it back proves anything. Self-cleaning: the probe family and
+# every row that references its child are removed afterwards.
+PROBE_EMAIL_PREFIX = "contract-probe-"
+
+
+def _fk_refs(qry, table):
+    """Tables and columns holding a foreign key to `table`."""
+    return qry("""SELECT OBJECT_NAME(fk.parent_object_id) tbl, c.name col
+                  FROM sys.foreign_keys fk
+                  JOIN sys.foreign_key_columns fkc
+                    ON fkc.constraint_object_id = fk.object_id
+                  JOIN sys.columns c
+                    ON c.object_id = fkc.parent_object_id
+                   AND c.column_id = fkc.parent_column_id
+                  WHERE fk.referenced_object_id = OBJECT_ID(?)""", (table,))
+
+
+def _probe_cleanup(qry):
+    """Remove probe families and everything that points at them.
+
+    Two levels, in order. Clearing only the child-level tables left the family
+    delete failing on RewardItems / Referrals / Classrooms and eleven others,
+    and the swallowed error meant a probe family quietly survived.
+    """
+    child_refs = _fk_refs(qry, "dbo.Children")
+    fam_refs = [r for r in _fk_refs(qry, "dbo.Families")
+                if r["tbl"] != "Children"]
+    fams = qry("SELECT family_id FROM dbo.Families WHERE email LIKE ?",
+               (PROBE_EMAIL_PREFIX + "%",))
+    for f in fams:
+        fid = f["family_id"]
+        # Repeat until a pass changes nothing: the referencing tables depend on
+        # each other (QuestionAttempts -> GeneratedQuestions -> Children) and
+        # sys.foreign_keys gives no ordering, so one pass cannot be enough.
+        for _round in range(4):
+            progress = 0
+            for r in child_refs:
+                try:
+                    progress += qry(
+                        "DELETE FROM dbo.[%s] WHERE [%s] IN "
+                        "(SELECT child_id FROM dbo.Children WHERE family_id=?)"
+                        % (r["tbl"], r["col"]), (fid,), fetch="exec") or 0
+                except Exception:
+                    pass
+            for r in fam_refs:
+                try:
+                    progress += qry(
+                        "DELETE FROM dbo.[%s] WHERE [%s]=?" % (r["tbl"], r["col"]),
+                        (fid,), fetch="exec") or 0
+                except Exception:
+                    pass
+            if not progress:
+                break
+        try:
+            qry("DELETE FROM dbo.Children WHERE family_id=?", (fid,), fetch="exec")
+            qry("DELETE FROM dbo.Families WHERE family_id=?", (fid,), fetch="exec")
+        except Exception as e:
+            print("    probe cleanup could not remove family %s: %s"
+                  % (fid, str(e)[:110]))
+    return len(fams)
+
+
+def c_progress_stored():
+    import time
+    sys.path.insert(0, "/var/www/littlescholarhub/lsh.api")
+    sys.path.insert(0, "/var/www/littlescholarhub/lsh.api/app")
+    try:
+        from app import create_app
+        from utils.db import qry
+    except Exception as e:
+        return False, "cannot import app: %s" % str(e)[:80]
+
+    email = "%s%d@example.invalid" % (PROBE_EMAIL_PREFIX, int(time.time()))
+    app = create_app()
+
+    # Anything left by a run that was interrupted.
+    try:
+        with app.test_request_context():
+            _probe_cleanup(qry)
+    except Exception:
+        pass
+
+    def post(path, body, token=None):
+        data = json.dumps(body).encode()
+        req = urllib.request.Request(BASE + path, data=data, method="POST")
+        req.add_header("Content-Type", "application/json")
+        if token:
+            req.add_header("Authorization", "Bearer " + token)
+        with urllib.request.urlopen(req, timeout=25) as r:
+            raw = r.read().decode()
+            return json.loads(raw) if raw else {}
+
+    child_id = None
+    try:
+        reg = post("/api/auth/register",
+                   {"email": email, "password": "ContractProbe12345",
+                    "language_id": 1, "role": "parent"})
+        token = reg.get("token")
+        if not token:
+            return False, "register returned no token"
+
+        ch = post("/api/children/",
+                  {"nickname": "ContractProbe", "grade_id": 2, "birth_year": 2019},
+                  token)
+        child_id = ch.get("child_id")
+        if not child_id:
+            return False, "child not created"
+
+        _c, qs = get("/api/questions/generate?subject=math&grade=2&count=1")
+        q = (qs.get("questions") or [{}])[0]
+        post("/api/questions/attempt", {
+            "child_id": child_id,
+            "given_answer": q.get("correct_answer"),
+            "correct_answer": q.get("correct_answer"),
+            "question_text": q.get("question_text"),
+            "options": q.get("options"), "time_sec": 5,
+        }, token)
+
+        with app.test_request_context():
+            rows = qry("SELECT attempt_id FROM dbo.QuestionAttempts WHERE child_id=?",
+                       (child_id,))
+        if not rows:
+            return False, "attempt returned 200 but NOTHING was stored"
+        return True, ""
+    finally:
+        try:
+            with app.test_request_context():
+                _probe_cleanup(qry)
+        except Exception:
+            pass
+
+
 print("API contract test -> %s" % BASE)
 check("GET /content/worksheets/<id> returns 200 + is_demo + steps", c_detail)
 check("list endpoint exposes is_demo", c_list_is_demo)
@@ -254,6 +388,7 @@ check("age bands: no TK material for older children", c_age_bands)
 check("every subject x grade returns questions (48 cells)", c_no_empty_cells)
 check("no published worksheet 500s when opened", c_no_500s)
 check("every scene-art rule still matches a live question", c_scene_art)
+check("a new family's progress is actually stored", c_progress_stored)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 if fails:

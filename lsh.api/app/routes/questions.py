@@ -7,8 +7,8 @@ GET  /templates        — list DB question templates
 
 import json
 from datetime import datetime
-from flask import Blueprint, request, jsonify, g
-from utils.db import qry, child_in_family
+from flask import Blueprint, request, jsonify, g, current_app
+from utils.db import qry, child_in_family, get_db
 from utils.auth import require_auth
 from services.question_generator import QuestionGenerator
 from services.gamification_service import award_reward
@@ -61,26 +61,43 @@ def record_attempt():
         return jsonify({"error": "Not found"}), 404
 
     try:
-        # Insert into GeneratedQuestions first to get gq_id
-        qry(
+        # Insert the question and take its id in the SAME batch. Split across
+        # two calls, SCOPE_IDENTITY() is NULL (it is scope-local and qry runs
+        # each statement as its own batch) and @@IDENTITY would cross scopes
+        # and could return a trigger's row id instead.
+        # SET NOCOUNT ON so the INSERT's row count is not returned as a result
+        # set ahead of the SELECT.
+        row = qry(
+            "SET NOCOUNT ON; "
             "INSERT INTO dbo.GeneratedQuestions "
             "(template_id, child_id, question_text, correct_answer, options_json, params_json) "
-            "VALUES (1, ?, ?, ?, ?, ?)",
+            "VALUES (1, ?, ?, ?, ?, ?); "
+            "SELECT CAST(SCOPE_IDENTITY() AS INT) AS id;",
             (child_id, body.get("question_text", ""), correct,
              json.dumps(body.get("options")), json.dumps(body.get("params"))),
-            fetch="exec"
+            fetch="one"
         )
-        gq_id = qry("SELECT @@IDENTITY AS id", fetch="one")
-        if gq_id:
+        # qry only commits on fetch='exec', and the connection is
+        # autocommit=False, so this batch must be committed by hand.
+        get_db().commit()
+
+        gq_id = (row or {}).get("id")
+        if gq_id is not None:            # the dict is truthy even when id is None
             qry(
                 "INSERT INTO dbo.QuestionAttempts "
                 "(child_id, gq_id, given_answer, is_correct, time_sec) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (child_id, gq_id["id"], given, 1 if is_correct else 0, time_sec),
+                (child_id, gq_id, given, 1 if is_correct else 0, time_sec),
                 fetch="exec"
             )
+        else:
+            current_app.logger.error(
+                "progress write: no identity returned for child_id=%s", child_id)
     except Exception:
-        pass
+        # Never silent. This is the one record a family would miss, and a
+        # swallowed failure looks exactly like a child who did no work.
+        current_app.logger.exception(
+            "progress write FAILED for child_id=%s — attempt not recorded", child_id)
 
     # Gamification: reward correct answers with XP (drives levels + badges). DB-safe.
     if is_correct:
