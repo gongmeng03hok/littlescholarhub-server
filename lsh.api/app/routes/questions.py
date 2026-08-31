@@ -107,14 +107,30 @@ def record_attempt():
     # Badges. Without this nothing ever evaluated them on an answer, so
     # first_sheet - which needs a single attempt - never fired across 47 of
     # them. Awarding must never break answering, hence the guard.
+    earned = []
     try:
-        evaluate_and_award(child_id, "attempt")
+        earned = evaluate_and_award(child_id, "attempt") or []
     except Exception:
         current_app.logger.exception("badge evaluation failed for child_id=%s", child_id)
 
+    # The screen cannot celebrate what it is not told about. Full rows, so
+    # the popup has the label and the art without another round trip.
+    new_badges = []
+    if earned:
+        try:
+            marks = ",".join("?" for _ in earned)
+            new_badges = qry(
+                "SELECT slug AS badge_slug, label, icon, icon_url, description, xp_value"
+                " FROM dbo.Badges WHERE slug IN (%s)" % marks,
+                tuple(earned)
+            ) or []
+        except Exception:
+            current_app.logger.exception("could not load newly earned badges")
+
     return jsonify({"is_correct": is_correct,
                     "correct_answer": body.get("correct_answer"),
-                    "hint": body.get("hint")})
+                    "hint": body.get("hint"),
+                    "new_badges": new_badges})
 
 
 @questions_bp.get("/subjects")

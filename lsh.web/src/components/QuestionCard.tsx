@@ -1,4 +1,5 @@
 import { CelebrationBurst } from "./CelebrationBurst";
+import { BadgeEarned, EarnedBadge } from "./BadgeEarned";
 import { useRef, useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { questionsApi } from "../api/questions";
@@ -34,6 +35,8 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
   // Bumped on every correct answer so the burst replays; the streak is
   // kept here rather than in the parent so a single card can show it.
   const [celebrate, setCelebrate] = useState(0);
+  // Badges just earned by this answer, shown after the answer feedback.
+  const [earned, setEarned] = useState<EarnedBadge[]>([]);
   const streak = useRef(0);
   const isMCQ = !!question.options?.length;
 
@@ -55,6 +58,11 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
       }) as any;
       const isCorrect = res.is_correct;
       setResult(isCorrect ? "correct" : "wrong");
+      // Held until the answer feedback has played; two celebrations at once
+      // read as one confusing flash.
+      if (res.new_badges?.length) {
+        setTimeout(() => setEarned(res.new_badges as EarnedBadge[]), 1300);
+      }
       if (isCorrect) {
         streak.current += 1;
         setCelebrate(c => c + 1);
@@ -74,6 +82,9 @@ export function QuestionCard({ question, childId, kidMode, context, onResult }: 
 
   return (
     <View style={[s.card, result === "correct" && s.correct, result === "wrong" && s.wrong]}>
+      {earned.length > 0 && (
+        <BadgeEarned badges={earned} onDone={() => setEarned([])} />
+      )}
       <CelebrationBurst
         trigger={celebrate}
         grade={typeof context?.grade === "number" ? context.grade : parseInt(String(context?.grade ?? 0), 10) || 0}

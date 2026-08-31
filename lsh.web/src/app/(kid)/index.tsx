@@ -193,7 +193,18 @@ export default function KidDashboard() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.badgeRow}>
             {badges.map((b: any) => (
               <View key={b.badge_slug} style={s.badgeChip}>
-                <Text style={s.badgeIcon}>{b.icon}</Text>
+                {/* The drawn medal. 17 of the 21 icons were stored as the
+                    character '?', so the emoji is only a fallback now. */}
+                {b.icon_url ? (
+                  <Image
+                    source={{ uri: b.icon_url }}
+                    style={s.badgeArt}
+                    resizeMode="contain"
+                    accessibilityLabel={b.label}
+                  />
+                ) : (
+                  <Text style={s.badgeIcon}>{b.icon}</Text>
+                )}
                 <Text style={s.badgeLabel} numberOfLines={2}>{b.label}</Text>
               </View>
             ))}
@@ -323,6 +334,7 @@ const s = StyleSheet.create({
                 paddingVertical: 14, paddingHorizontal: 6,
                 shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   badgeIcon:  { fontSize: 30, marginBottom: 6 },
+  badgeArt:   { width: 56, height: 65, marginBottom: 4 },
   badgeLabel: { fontSize: 11, fontWeight: "800", color: colors.text, textAlign: "center" },
 
   smallGrid:  { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 20, marginBottom: 20 },

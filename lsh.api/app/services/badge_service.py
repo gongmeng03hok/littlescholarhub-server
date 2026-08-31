@@ -126,7 +126,8 @@ def evaluate_and_award(child_id: int, event_type: str, event_meta: dict = None) 
 
 def get_child_badges(child_id: int) -> list:
     rows = qry(
-        "SELECT cb.badge_slug, b.label, b.icon, b.description, b.xp_value, cb.earned_at"
+        "SELECT cb.badge_slug, b.label, b.icon, b.icon_url, b.description,"
+        " b.xp_value, cb.earned_at"
         " FROM dbo.ChildBadges cb"
         " JOIN dbo.Badges b ON cb.badge_slug = b.slug"
         " WHERE cb.child_id=?"
