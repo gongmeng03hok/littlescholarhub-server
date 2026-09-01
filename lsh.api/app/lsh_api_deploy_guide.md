@@ -104,16 +104,16 @@ Set it to:
 ```env
 # ── Database ──────────────────────────────────────────────
 # SQL Server is on the SAME server → use localhost
-DB_CONN=DRIVER={ODBC Driver 18 for SQL Server};SERVER=localhost,1433;DATABASE=LittleScholarsHub;UID=SA;PWD=YOUR_DB_PASSWORD;TrustServerCertificate=yes
+DB_CONN=DRIVER={ODBC Driver 18 for SQL Server};SERVER=localhost,1433;DATABASE=LittleScholarsHub;UID=SA;PWD=Password123!;TrustServerCertificate=yes
 
 # ── Security ──────────────────────────────────────────────
-JWT_SECRET=YOUR_JWT_SECRET
+JWT_SECRET=c5125b078729f96bd1895b2e17975ca9b064a37ad5204939abed59f91c5fa2d1
 
 # ── Email (optional — fill in when ready) ─────────────────
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
 SMTP_USER=apikey
-SMTP_PASSWORD=YOUR_SMTP_PASSWORD
+SMTP_PASSWORD=your-sendgrid-api-key
 FROM_EMAIL=noreply@littlescholarhub.com
 
 # ── App ───────────────────────────────────────────────────

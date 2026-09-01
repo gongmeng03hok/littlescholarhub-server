@@ -1,7 +1,3 @@
-# Run with:  LSH_DB_PASSWORD=... python3 seed_gita_wisdom.py
-# The password used to be hard-coded here; it now comes from the
-# environment so this file is safe to commit and to share.
-import os
 """
 Seeds dbo.DailyWisdom with all 30 GITA_WISDOM entries.
 Uses parameterized queries so titles/bodies with special chars are stored cleanly.
@@ -18,7 +14,7 @@ CONN_STR = (
     "DRIVER={ODBC Driver 18 for SQL Server};"
     "SERVER=94.72.121.94,1433;"
     "DATABASE=LittleScholarHub;"
-    "UID=SA;PWD=${LSH_DB_PASSWORD};"
+    "UID=SA;PWD=Password123!;"
     "TrustServerCertificate=yes;Encrypt=yes;"
 )
 

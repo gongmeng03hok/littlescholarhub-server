@@ -1,6 +1,7 @@
 # Dependencies and build output — reinstallable, and huge.
 node_modules/
 lsh.api/venv/
+venv/
 lsh.web/src/dist/
 lsh.web/dist/
 lsh.web/dist_candidate/
@@ -11,12 +12,20 @@ dist_old_*/
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
 
 # Secrets. NEVER commit these — .env holds the live DB password, JWT secret
 # and SMTP credentials. Templates only.
 .env
 *.env
 !.env.example
+
+# A copy of the live .env — never commit.
+.env.save
+*.env.save
+**/.env.save
+**/.env.bak
+**/.env.local
 
 # My timestamped safety copies; git is the history now.
 *.bak
@@ -31,14 +40,17 @@ assets.bak.*
 # Logs and scratch
 *.log
 expo-log.txt
-.DS_Store
+npm-debug.log*
+scratch_tmp/
 
 # A full CREATE DATABASE dump, not a migration.
 lsh.database/complete_bckp.sql
 
-# A copy of the live .env — never commit.
-.env.save
-*.env.save
-**/.env.save
-**/.env.bak
-**/.env.local
+# Editor / IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+~$*

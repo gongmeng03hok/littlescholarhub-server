@@ -5,17 +5,45 @@ export interface PracticePacket {
   plan_id: number; grade_id: number; week_of: string; title: string;
   categories: {
     category_id: number; category_name: string;
-    subject_area: "math" | "ela" | "writing" | "science" | "social_studies" | "puzzle";
+    // The original 6 (see dbo.PacketSubjectAreas.is_always_on = 1) plus the
+    // Whole-Child Curriculum groups added in 63_whole_child_rotation.sql —
+    // only 'sel' and 'cognitive_skills' have content so far, the rest are
+    // seeded in the lookup table for future content batches.
+    subject_area: "math" | "ela" | "writing" | "science" | "social_studies" | "puzzle"
+      | "sel" | "cognitive_skills" | "life_skills" | "stem_engineering" | "arts"
+      | "civic" | "health" | "humor_play" | "character" | "culture";
     layout_type: "short_answer" | "space_heavy" | "puzzle";
     intro_text: string | null;
     questions: {
       question_id: number;
       question_type: "fill_blank" | "multiple_choice" | "short_response" | "matching" | "word_search";
-      prompt: string; choices: string[] | null; answer: string;
-      diagram_type: "clock" | "emoji" | null;
-      diagram_data: { hour?: number; minute?: number; emoji?: string } | null;
+      prompt: string;
+      // string[] for multiple_choice; {left, right} for matching (answer is
+      // a JSON-stringified array of [leftIndex, rightIndex] correct pairs —
+      // not decoded here, only used for the printed/on-screen answer key).
+      choices: string[] | { left: string[]; right: string[] } | null;
+      answer: string;
+      diagram_type: "clock" | "emoji" | "ten_frame" | "angle" | "rectangle_dims" | "coordinate_point" | "sequence_steps" | null;
+      diagram_data: {
+        hour?: number; minute?: number; emoji?: string; count?: number; degrees?: number;
+        width?: number; height?: number; unit?: string; x?: number; y?: number; size?: number;
+        steps?: string[];
+      } | null;
     }[];
   }[];
+}
+
+export interface OutdoorGame {
+  grade_id: number;
+  grade_label: string;
+  name: string;
+  // Only present on the 1980s-retro batch (71_outdoor_games_retro80s_content.sql)
+  // — empty string for games from earlier batches without this line.
+  inspiration: string;
+  objective: string;
+  materials: string[];
+  steps: string[];
+  safety_tip: string;
 }
 
 export interface WorksheetFilters {
@@ -105,6 +133,11 @@ export const contentApi = {
 
   getPracticePacket: (grade: number, week_of: string) =>
     http.get("/content/practice-packet", { params: { grade, week_of } }) as Promise<PracticePacket>,
+
+  // Admin-only: the full Outdoor Games bank across every grade (not the
+  // weekly-rotated 7-of-14 subset getPracticePacket returns).
+  getOutdoorGames: () =>
+    http.get("/content/outdoor-games") as Promise<{ games: OutdoorGame[] }>,
 
   getThemeWeeks: (grade?: number) =>
     http.get("/content/theme-weeks", { params: grade ? { grade } : {} }) as Promise<any[]>,

@@ -87,6 +87,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="content/featured"  options={{ href: null }} />
       <Tabs.Screen name="content/theme-weeks" options={{ href: null }} />
       <Tabs.Screen name="content/weekly-packets" options={{ href: null }} />
+      <Tabs.Screen name="content/outdoor-games" options={{ href: null }} />
     </Tabs>
   );
 }

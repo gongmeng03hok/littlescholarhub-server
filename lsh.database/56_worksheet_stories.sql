@@ -1,4 +1,4 @@
--- 56_worksheet_stories.sql
+﻿-- 56_worksheet_stories.sql
 -- Gives every "<Theme> Story - Grade <N>" worksheet a real story to read.
 --
 -- Eleven worksheets promised reading material and had none: dbo.Worksheets has

@@ -13,12 +13,24 @@ import { WEEK_OPTIONS_2026, buildWordSearch, type WordSearchResult } from "../ut
 import { colors } from "../constants/theme";
 
 export const SUBJECT_META: Record<string, { label: string; color: string; tint: string }> = {
-  math:           { label: "MATH",           color: "#453aa8", tint: "#eeecfb" },
-  ela:            { label: "ELA",            color: "#1f6b3a", tint: "#e9f3e4" },
-  writing:        { label: "WRITING",        color: "#a83f2a", tint: "#fbe9e4" },
-  science:        { label: "SCIENCE",        color: "#1b5a8a", tint: "#e6f0fa" },
-  social_studies: { label: "SOCIAL STUDIES", color: "#8a5a1b", tint: "#f7ecd9" },
-  puzzle:         { label: "PUZZLE",         color: "#8a1b6e", tint: "#f8e6f3" },
+  math:              { label: "MATH",              color: "#453aa8", tint: "#eeecfb" },
+  ela:               { label: "ELA",               color: "#1f6b3a", tint: "#e9f3e4" },
+  writing:           { label: "WRITING",           color: "#a83f2a", tint: "#fbe9e4" },
+  science:           { label: "SCIENCE",           color: "#1b5a8a", tint: "#e6f0fa" },
+  social_studies:    { label: "SOCIAL STUDIES",    color: "#8a5a1b", tint: "#f7ecd9" },
+  puzzle:            { label: "PUZZLE",            color: "#8a1b6e", tint: "#f8e6f3" },
+  // Whole-Child Curriculum groups (see lsh.database/63_whole_child_rotation.sql) —
+  // rotated in alongside the original 6 (see dbo.PacketSubjectAreas.is_always_on).
+  sel:               { label: "FEELINGS & FRIENDSHIP", color: "#178f7c", tint: "#e0f7f3" },
+  cognitive_skills:  { label: "THINKING SKILLS",   color: "#2d5fbf", tint: "#e7edfa" },
+  life_skills:       { label: "LIFE SKILLS",       color: "#a8760c", tint: "#f9f0dc" },
+  stem_engineering:  { label: "STEM & ENGINEERING",color: "#1b7f95", tint: "#e2f3f6" },
+  arts:              { label: "ARTS",              color: "#c2417a", tint: "#fbe9f0" },
+  civic:             { label: "COMMUNITY & CIVICS",color: "#4a7a1b", tint: "#eef5e2" },
+  health:            { label: "HEALTH & FITNESS",  color: "#b0242f", tint: "#f9e2e4" },
+  humor_play:        { label: "HUMOR & PLAY",      color: "#d1841b", tint: "#faf0dd" },
+  character:         { label: "CHARACTER & VALUES",color: "#6b3aa8", tint: "#ece4f9" },
+  culture:           { label: "CULTURE & LANGUAGE",color: "#1b6b6e", tint: "#e2f2f2" },
 };
 
 /** Splits categories into on-screen layout groups and computes the
@@ -138,6 +150,42 @@ function CoordinatePointDiagram({ x, y, size = 6 }: { x: number; y: number; size
   );
 }
 
+function SequenceStepsDiagram({ steps }: { steps: string[] }) {
+  return (
+    <View style={s.seqWrap}>
+      {steps.map((step, i) => (
+        <View key={i} style={s.seqStep}>
+          <View style={s.seqBadge}><Text style={s.seqBadgeText}>{i + 1}</Text></View>
+          <Text style={s.seqStepText}>{step}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function MatchingQuestion({ q }: { q: any }) {
+  const left: string[] = q.choices?.left ?? [];
+  const right: string[] = q.choices?.right ?? [];
+  const letters = "ABCDEFGH";
+  return (
+    <View style={s.matchWrap}>
+      <View style={s.matchCol}>
+        {left.map((item, i) => (
+          <View key={i} style={s.matchRow}>
+            <View style={s.matchBlank} />
+            <Text style={s.matchText}>{i + 1}. {item}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={s.matchCol}>
+        {right.map((item, i) => (
+          <Text key={i} style={s.matchText}>{letters[i]}. {item}</Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function QuestionDiagram({ q }: { q: any }) {
   if (q.diagram_type === "clock" && q.diagram_data) {
     return <ClockDiagram hour={q.diagram_data.hour} minute={q.diagram_data.minute} />;
@@ -157,7 +205,17 @@ function QuestionDiagram({ q }: { q: any }) {
   if (q.diagram_type === "coordinate_point" && q.diagram_data) {
     return <CoordinatePointDiagram x={q.diagram_data.x} y={q.diagram_data.y} size={q.diagram_data.size} />;
   }
+  if (q.diagram_type === "sequence_steps" && q.diagram_data?.steps) {
+    return <SequenceStepsDiagram steps={q.diagram_data.steps} />;
+  }
   return null;
+}
+
+/** sequence_steps renders as a full-width stacked list (it's a multi-line
+ * numbered sequence, not a small icon), unlike every other diagram_type
+ * which is a compact glyph shown beside the question text. */
+function isBlockDiagram(q: any): boolean {
+  return q.diagram_type === "sequence_steps";
 }
 
 function guessInstruction(cat: any): string {
@@ -166,6 +224,7 @@ function guessInstruction(cat: any): string {
     case "multiple_choice": return "Circle the correct answer.";
     case "short_response": return "Answer in complete sentences.";
     case "word_search": return "Find and circle the words.";
+    case "matching": return "Draw a line or write the letter to match each pair.";
     default: return "";
   }
 }
@@ -177,18 +236,37 @@ function CategoryCard({ cat, num, style }: { cat: any; num: number; style: any }
       <Text style={[s.cardTitle, { color: meta.color }]}>{num}. {cat.category_name}</Text>
       <Text style={s.cardInstr}>{meta.label} · {guessInstruction(cat)}</Text>
       {!!cat.intro_text && <Text style={s.introText}>{cat.intro_text}</Text>}
-      {cat.questions.map((q: any, i: number) => (
-        <View key={q.question_id} style={[s.qRow, q.diagram_type && s.qRowWithDiagram]}>
-          {q.diagram_type && <QuestionDiagram q={q} />}
-          <View style={{ flex: 1 }}>
-            <Text style={s.qText}>
-              {i + 1}. {q.prompt}
-              {q.question_type === "multiple_choice" && q.choices ? `  (${q.choices.join(" / ")})` : ""}
-            </Text>
-            {q.question_type === "short_response" && <View style={s.qLine} />}
+      {cat.questions.map((q: any, i: number) => {
+        if (q.question_type === "matching") {
+          return (
+            <View key={q.question_id} style={s.qRow}>
+              <Text style={s.qText}>{i + 1}. {q.prompt}</Text>
+              <MatchingQuestion q={q} />
+            </View>
+          );
+        }
+        if (isBlockDiagram(q)) {
+          return (
+            <View key={q.question_id} style={s.qRow}>
+              <Text style={s.qText}>{i + 1}. {q.prompt}</Text>
+              <QuestionDiagram q={q} />
+              {q.question_type === "short_response" && <View style={s.qLine} />}
+            </View>
+          );
+        }
+        return (
+          <View key={q.question_id} style={[s.qRow, q.diagram_type && s.qRowWithDiagram]}>
+            {q.diagram_type && <QuestionDiagram q={q} />}
+            <View style={{ flex: 1 }}>
+              <Text style={s.qText}>
+                {i + 1}. {q.prompt}
+                {q.question_type === "multiple_choice" && q.choices ? `  (${q.choices.join(" / ")})` : ""}
+              </Text>
+              {q.question_type === "short_response" && <View style={s.qLine} />}
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -330,7 +408,22 @@ function diagramHtml(q: any): string {
       <div class="coord-dot" style="left:${px - 3}px;top:${py - 3}px"></div>
     </div>`;
   }
+  if (q.diagram_type === "sequence_steps" && q.diagram_data?.steps) {
+    const steps: string[] = q.diagram_data.steps;
+    return `<div class="seq-wrap">${steps.map((step, i) => `
+      <div class="seq-step"><span class="seq-badge">${i + 1}</span><span>${esc(step)}</span></div>`).join("")}
+    </div>`;
+  }
   return "";
+}
+
+function matchingHtml(q: any): string {
+  const left: string[] = q.choices?.left ?? [];
+  const right: string[] = q.choices?.right ?? [];
+  const letters = "ABCDEFGH";
+  const leftHtml = left.map((item, i) => `<div class="match-row"><span class="match-blank"></span>${i + 1}. ${esc(item)}</div>`).join("");
+  const rightHtml = right.map((item, i) => `<div class="match-row">${letters[i]}. ${esc(item)}</div>`).join("");
+  return `<div class="match-wrap"><div class="match-col">${leftHtml}</div><div class="match-col">${rightHtml}</div></div>`;
 }
 
 const GRADE_DISPLAY: Record<string, string> = {
@@ -362,7 +455,25 @@ function buildPrintHtml(packet: PracticePacket, wordSearches: Record<number, Wor
     </div>
     <hr class="rule"/>`;
 
-  const questionHtml = (q: any, i: number) => `
+  const isBlockDiagramQ = (q: any) => q.diagram_type === "sequence_steps";
+
+  const questionHtml = (q: any, i: number) => {
+    if (q.question_type === "matching") {
+      return `
+        <div class="q q-block">
+          <span><b>${i + 1}.</b> ${esc(q.prompt)}</span>
+          ${matchingHtml(q)}
+        </div>`;
+    }
+    if (isBlockDiagramQ(q)) {
+      return `
+        <div class="q q-block">
+          <span><b>${i + 1}.</b> ${esc(q.prompt)}</span>
+          ${diagramHtml(q)}
+          ${q.question_type === "short_response" ? '<div class="line"></div>' : ""}
+        </div>`;
+    }
+    return `
     <div class="q ${q.diagram_type ? "q-with-diagram" : ""}">
       ${diagramHtml(q)}
       <div class="q-body">
@@ -370,6 +481,7 @@ function buildPrintHtml(packet: PracticePacket, wordSearches: Record<number, Wor
         ${q.question_type === "short_response" ? '<div class="line"></div>' : ""}
       </div>
     </div>`;
+  };
 
   const categoryHtml = (cat: any, num: number) => {
     const meta = SUBJECT_META[cat.subject_area] ?? SUBJECT_META.math;
@@ -436,8 +548,19 @@ function buildPrintHtml(packet: PracticePacket, wordSearches: Record<number, Wor
     .q { font-size: 13px; line-height: 1.6; margin-bottom: 9px; }
     .q-with-diagram { display: flex; align-items: center; gap: 10px; }
     .q-body { flex: 1; }
+    .q-block { display: block; }
     .qcols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
     .line { border-bottom: 1px dotted #6b628c; height: 16px; margin-top: 2px; }
+
+    .seq-wrap { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+    .seq-step { display: flex; align-items: center; gap: 8px; }
+    .seq-badge { flex-shrink: 0; width: 18px; height: 18px; border-radius: 9px; background: #453aa8; color: #fff;
+                 font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+
+    .match-wrap { margin-top: 6px; display: flex; gap: 24px; }
+    .match-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .match-row { display: flex; align-items: center; gap: 8px; }
+    .match-blank { flex-shrink: 0; width: 22px; height: 22px; border: 1.5px solid #6b628c; border-radius: 4px; }
 
     .clock { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #221c33; position: relative; flex-shrink: 0; background: #fff; }
     .clock .hand { position: absolute; left: 50%; bottom: 50%; transform-origin: bottom center; background: #221c33; border-radius: 2px; }
@@ -547,6 +670,18 @@ const s = StyleSheet.create({
   coordGrid: { position: "relative", borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceAlt, flexShrink: 0 },
   coordAxis: { position: "absolute", backgroundColor: colors.textMuted },
   coordDot: { position: "absolute", width: 8, height: 8, borderRadius: 4, backgroundColor: "#a83f2a" },
+
+  seqWrap: { marginTop: 6, gap: 6 },
+  seqStep: { flexDirection: "row", alignItems: "center", gap: 8 },
+  seqBadge: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  seqBadgeText: { color: "white", fontSize: 11, fontWeight: "800" },
+  seqStepText: { fontSize: 13, color: colors.text, flex: 1, lineHeight: 19 },
+
+  matchWrap: { marginTop: 8, flexDirection: "row", gap: 24 },
+  matchCol: { flex: 1, gap: 8 },
+  matchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  matchBlank: { width: 24, height: 24, borderWidth: 1.5, borderColor: colors.textMuted, borderRadius: 5, flexShrink: 0 },
+  matchText: { fontSize: 13, color: colors.text, flex: 1, lineHeight: 19 },
 
   wsGrid: { alignSelf: "center", gap: 1, backgroundColor: colors.border, borderRadius: 8, overflow: "hidden", padding: 1, marginTop: 8 },
   wsRow: { flexDirection: "row", gap: 1 },

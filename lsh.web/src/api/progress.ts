@@ -6,6 +6,17 @@ export const progressApi = {
   log: (body: { child_id: number; subject_id: number; duration_min: number }) =>
     http.post("/progress/log", body),
   getBadges: (childId: number) => http.get(`/progress/${childId}/badges`) as Promise<any[]>,
+  /** One month of days; `month` is YYYY-MM, omitted means the current month. */
+  calendar: (childId: number, month?: string) =>
+    http.get(`/progress/${childId}/calendar`, { params: month ? { month } : {} }) as Promise<{
+      month: string;
+      days: {
+        date: string; minutes: number; sessions: number;
+        subjects: string[]; assigned: number; completed: number;
+      }[];
+      totals: { days_active: number; minutes: number; sessions: number; completed: number };
+      streak: { current_streak: number; longest_streak: number; last_active: string | null };
+    }>,
   getActivities: (childId: number, limit = 30) =>
     http.get(`/progress/${childId}/activities`, { params: { limit } }) as Promise<{
       quiz_attempts: {

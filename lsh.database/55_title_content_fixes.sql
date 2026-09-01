@@ -1,4 +1,4 @@
--- 55_title_content_fixes.sql
+﻿-- 55_title_content_fixes.sql
 -- Two data mismatches found by the title-vs-content audit.
 --
 -- C) Eleven rows are titled "... Workbooks - Grade N" but stored as

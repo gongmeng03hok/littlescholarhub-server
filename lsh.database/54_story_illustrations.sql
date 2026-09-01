@@ -1,4 +1,4 @@
--- 54_story_illustrations.sql
+﻿-- 54_story_illustrations.sql
 -- Every published story now has its own illustration.
 --
 -- Before this, 13 of 24 published stories had thumbnail_url NULL, so the story

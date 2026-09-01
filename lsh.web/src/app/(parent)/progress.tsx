@@ -5,6 +5,7 @@ import {
   ScrollView, View, Text, TouchableOpacity, Image,
   StyleSheet, ActivityIndicator, Platform, Dimensions,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useChildStore } from "../../store/childStore";
 import { useChildren } from "../../hooks/useChildren";
 import { useProgress, useProgressChart, useActivities } from "../../hooks/useApi";
@@ -44,6 +45,7 @@ function BarChart({ data }: { data: { date: string; minutes: number }[] }) {
 
 export default function ProgressScreen() {
   useChildren(); // hydrate the child list so a reload / deep link resolves a child
+  const router = useRouter();
   const { activeChild, children, setActiveChild } = useChildStore();
   const childId = activeChild?.child_id;
 
@@ -83,6 +85,12 @@ export default function ProgressScreen() {
           </ScrollView>
         )}
       </View>
+
+      {/* The chart below covers seven days; the month lives on its own screen. */}
+      <TouchableOpacity style={s.calLink} onPress={() => router.push("/(parent)/calendar")}>
+        <Text style={s.calLinkText}>📅  See the whole month</Text>
+        <Text style={s.calLinkArrow}>→</Text>
+      </TouchableOpacity>
 
       {/* Streak badges */}
       <View style={s.section}>
@@ -211,6 +219,11 @@ export default function ProgressScreen() {
 }
 
 const s = StyleSheet.create({
+  calLink: { flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+             backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+             borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 14 },
+  calLinkText:  { fontSize: 15, fontWeight: "800", color: colors.text },
+  calLinkArrow: { fontSize: 18, fontWeight: "900", color: colors.brand },
   root:    { flex: 1, backgroundColor: "#f8f7ff" },
   content: { paddingBottom: 40 },
   center:  { flex: 1, justifyContent: "center", alignItems: "center" },

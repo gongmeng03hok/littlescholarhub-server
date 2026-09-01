@@ -182,6 +182,14 @@ export function usePracticePacket(grade: number, weekOf: string) {
   });
 }
 
+export function useOutdoorGames() {
+  return useQuery({
+    queryKey: ["outdoorGames"],
+    queryFn:  () => contentApi.getOutdoorGames(),
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
 export function useThemeWeeks(grade?: number) {
   return useQuery({
     queryKey: ["themeWeeks", grade],
@@ -280,6 +288,15 @@ export function useProgress(childId: number | undefined) {
       weekly:     { sessions: 0, mins: 0 },
       by_subject: [],
     },
+  });
+}
+
+export function useCalendarMonth(childId: number | undefined, month: string) {
+  return useQuery({
+    queryKey: ["calendar", childId, month],
+    queryFn:  () => progressApi.calendar(childId!, month),
+    enabled:  !!childId,
+    staleTime: 60 * 1000,
   });
 }
 

@@ -1,4 +1,4 @@
--- 57_replace_third_party_story.sql
+﻿-- 57_replace_third_party_story.sql
 -- Retires story 23 and replaces it with an original.
 --
 -- story_id 23 was titled "MIA-life-story-book". The title was the smallest

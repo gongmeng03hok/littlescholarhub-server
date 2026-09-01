@@ -100,7 +100,7 @@ export function WorksheetPlayer({ questions, childId, headerTitle, artContext, o
     <View style={s.root}>
       <View style={s.header}>
         <TouchableOpacity onPress={onExit} style={s.back}><Text style={s.backText}>←</Text></TouchableOpacity>
-        <Text style={s.headerTitle}>{headerTitle ?? "Worksheet"}</Text>
+        <Text style={s.headerTitle} numberOfLines={1}>{headerTitle ?? "Worksheet"}</Text>
         <Text style={s.progress}>{roundIdx + 1}/{rounds.length}</Text>
       </View>
 

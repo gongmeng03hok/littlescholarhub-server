@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Internal review page. Kept out of the index so it never competes with the
+     real topic pages in search. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Badge art review — Little Scholars Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14101f; --card: #1e1830; --line: #2f2745;
+    --text: #f4f0ff; --muted: #a79cc4; --accent: #ffd97a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 64px;
+    background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+  }
+  header { max-width: 1080px; margin: 0 auto 28px; }
+  h1 { font-family: Fredoka, sans-serif; font-size: 30px; margin: 0 0 8px; }
+  p.lede { color: var(--muted); margin: 0; line-height: 1.55; max-width: 60ch; }
+  h2 {
+    font-family: Fredoka, sans-serif; font-size: 15px; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--accent);
+    max-width: 1080px; margin: 34px auto 14px; padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .grid {
+    max-width: 1080px; margin: 0 auto;
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .b {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px 10px 14px; text-align: center;
+  }
+  .b img { width: 96px; height: 112px; display: block; margin: 0 auto 10px; }
+  .lab { font-family: Fredoka, sans-serif; font-weight: 700; font-size: 14px; }
+  .slug { color: var(--muted); font-size: 11px; margin-top: 3px; word-break: break-all; }
+  .meta { color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .emoji { font-size: 15px; }
+  footer {
+    max-width: 1080px; margin: 40px auto 0; color: var(--muted);
+    font-size: 13px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 18px;
+  }
+  /* On a small screen the medals matter more than the captions. */
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+    .b img { width: 78px; height: 91px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Badge art review</h1>
+  <p class="lede">
+    All 21 badges at roughly the size a child sees them on the home screen.
+    Tier colour comes from each badge's XP value, so bronze, silver and gold
+    should read as a progression. Tell me which ones miss and I'll redraw them.
+  </p>
+</header>
+
+<h2>Bronze — 15 XP and under</h2>
+<div class="grid" id="bronze"></div>
+
+<h2>Silver — 16 to 30 XP</h2>
+<div class="grid" id="silver"></div>
+
+<h2>Gold — over 30 XP</h2>
+<div class="grid" id="gold"></div>
+
+<footer>
+  The emoji under each label is the fallback, used only if the drawing fails to
+  load. Seventeen of those emoji were previously stored as the character
+  <code>?</code>, which is what a child actually saw.
+</footer>
+
+<script>
+const BADGES = [
+  ["first_sheet",             "First Worksheet!",  "\u{1F4C4}", 10],
+  ["first_worksheet",         "First Steps",       "\u{1F463}", 10],
+  ["first_mini_book",         "Bookworm",          "\u{1F4D6}", 10],
+  ["homework_1st_scan",       "First Scan!",       "\u{1F4F8}", 10],
+  ["first_culture_worksheet", "Culture Explorer",  "\u{1F30D}", 15],
+  ["first_language_switch",   "Polyglot",          "\u{1F4AC}", 15],
+  ["streak_3",                "3-Day Streak",      "\u{1F525}", 15],
+  ["level_5",                 "Rising Star",       "\u{2B50}",  15],
+  ["speed_star",              "Speed Star",        "\u{26A1}",  20],
+  ["xp_100",                  "100 XP Club",       "\u{1F537}", 20],
+  ["homework_5_scans",        "Scan Streak",       "\u{1F4F7}", 25],
+  ["perfect_day",             "Perfect Day",       "\u{2705}",  25],
+  ["drill_master",            "Drill Master",      "\u{1F3AF}", 30],
+  ["level_10",                "Super Scholar",     "\u{1F31F}", 30],
+  ["streak_7",                "7-Day Streak",      "\u{1F525}", 35],
+  ["homework_10_scans",       "Homework Hero",     "\u{1F9B8}", 40],
+  ["topic_mastered",          "Topic Mastered",    "\u{26F0}",  40],
+  ["xp_1000",                 "XP Champion",       "\u{1F48E}", 40],
+  ["streak_30",               "Unstoppable",       "\u{1F3C6}", 50],
+  ["week_warrior",            "Week Warrior",      "\u{1F4C5}", 50],
+  ["xp_500",                  "500 XP Legend",     "\u{1F4A0}", 50],
+];
+
+for (const [slug, label, emoji, xp] of BADGES) {
+  const bucket = xp <= 15 ? "bronze" : xp <= 30 ? "silver" : "gold";
+  const el = document.createElement("div");
+  el.className = "b";
+  el.innerHTML =
+    '<img src="/art/badge_' + slug + '.svg" alt="' + label + '" loading="lazy">' +
+    '<div class="lab">' + label + '</div>' +
+    '<div class="slug">' + slug + '</div>' +
+    '<div class="meta"><span class="emoji">' + emoji + '</span> &middot; ' + xp + ' XP</div>';
+  document.getElementById(bucket).appendChild(el);
+}
+</script>
+</body>
+</html>

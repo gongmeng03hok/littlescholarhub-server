@@ -1,4 +1,4 @@
--- 70_universal_wisdom.sql
+﻿-- 70_universal_wisdom.sql
 -- Original English 'Words for Today' entries for Little Scholars Hub.
 --
 -- Why: dbo.DailyWisdom held 30 rows on the 'gita' track for language_id 1

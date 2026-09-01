@@ -1,4 +1,4 @@
--- 53_stem_sel_stories_batch1.sql
+﻿-- 53_stem_sel_stories_batch1.sql
 -- First batch of original TK–1st stories, written for this platform.
 --
 -- WHY THESE: 2026 market research (Scholastic read-aloud lists, Amazon

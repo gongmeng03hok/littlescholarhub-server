@@ -449,7 +449,8 @@ def list_worksheets():
     rows = qry(sql, params)
     if rows:
         for r in rows:
-            _decorate_worksheet(r)
+            if not r.get("pdf_url") and r.get("pdf_generator_key"):
+                r["pdf_url"] = request.url_root.rstrip("/") + f"/api/content/worksheets/{r['worksheet_id']}/pdf"
         return jsonify(rows)
 
     # Dev-mode fallback filtering over the static seed mirror
@@ -1210,8 +1211,12 @@ def complete_assignment(assignment_id: int):
     return jsonify({"ok": True})
 
 
-# Home language -> the wisdom track that language defaults to.
-# 1 English, 2 Chinese, 3 Hindi, 4 Spanish.
+# Default source_track per language_id when the caller doesn't pin one —
+# see 70/71_*.sql: language 1 (English) used to hard-default to 'gita'
+# here regardless of the caller's language, so an English-home family's
+# dashboard opened on Bhagavad Gita scripture. 'gita' stays the correct
+# default for Hindi (language 3) — it's one of the three cultural tracks
+# families choose on purpose, not a fallback.
 _DEFAULT_WISDOM_TRACK = {1: "universal", 2: "chinese", 3: "gita", 4: "hispanic"}
 
 

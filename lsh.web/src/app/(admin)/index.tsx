@@ -27,6 +27,7 @@ const QUICK_LINKS = [
   { emoji: "📖", label: "Manage Stories",    route: "/(admin)/content/stories"    },
   { emoji: "🗓️", label: "Weekly Story Packs",route: "/(admin)/content/theme-weeks"},
   { emoji: "📅", label: "Weekly Packets", route: "/(admin)/content/weekly-packets" },
+  { emoji: "🏃", label: "Outdoor Games", route: "/(admin)/content/outdoor-games" },
   { emoji: "ॐ",  label: "Manage Wisdom",     route: "/(admin)/content/wisdom"     },
   { emoji: "❓", label: "Question Templates",route: "/(admin)/content/questions"  },
   { emoji: "👥", label: "Users & Roles",     route: "/(admin)/users"              },

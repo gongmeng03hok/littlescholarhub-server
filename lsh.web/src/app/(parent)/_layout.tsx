@@ -81,6 +81,7 @@ export default function ParentLayout() {
         }}
       />
       {/* Hidden tabs — accessible via navigation, not tab bar */}
+      <Tabs.Screen name="calendar"           options={{ href: null }} />
       <Tabs.Screen name="weekly-packets"      options={{ href: null }} />
       <Tabs.Screen name="practice/[subject]" options={{ href: null }} />
       <Tabs.Screen name="assessment"         options={{ href: null }} />

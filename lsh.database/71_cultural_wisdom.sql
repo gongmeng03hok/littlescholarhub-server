@@ -1,4 +1,4 @@
--- 71_cultural_wisdom.sql
+﻿-- 71_cultural_wisdom.sql
 -- Daily-wisdom pools for the three cultural tracks.
 --
 -- Chinese (language_id 2) and Spanish (language_id 4) each held only 2 rows,

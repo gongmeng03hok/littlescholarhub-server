@@ -1,4 +1,4 @@
--- 58_theme_reading_stories.sql
+﻿-- 58_theme_reading_stories.sql
 -- Gives every "<Theme> Reading - Grade N" worksheet a story to actually read.
 --
 -- 13 worksheets are titled "<Theme> Reading - Grade N" and 39 rows across the

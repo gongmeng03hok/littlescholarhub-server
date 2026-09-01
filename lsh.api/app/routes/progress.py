@@ -154,6 +154,116 @@ def activities(child_id):
     return jsonify({"quiz_attempts": quiz, "homework": homework})
 
 
+@progress_bp.get("/<int:child_id>/calendar")
+@require_auth
+def calendar_month(child_id):
+    """One month of a child's learning, a row per day.
+
+    The dashboard already answers "how are we doing this week". A parent
+    planning the next fortnight is asking a different question — which days did
+    we actually sit down, and what is still outstanding — and that only reads
+    as a month grid.
+
+    ?month=YYYY-MM, defaulting to the current month. Days with nothing on them
+    are returned too, so the client can lay out the grid without inventing gaps.
+    """
+    if not _verify_child(child_id, g.family_id):
+        return jsonify({"error": "Not found"}), 404
+
+    raw = (request.args.get("month") or "").strip()
+    today = date.today()
+    try:
+        year, month = (int(x) for x in raw.split("-", 1))
+        first = date(year, month, 1)
+    except (ValueError, TypeError):
+        first = date(today.year, today.month, 1)
+    # First of next month, without a calendar dependency
+    nxt = date(first.year + (first.month == 12), (first.month % 12) + 1, 1)
+    last = nxt - timedelta(days=1)
+
+    sessions = qry(
+        "SELECT sl.session_date, COUNT(*) AS sessions,"
+        "       ISNULL(SUM(sl.duration_min),0) AS minutes"
+        "  FROM dbo.SessionLogs sl"
+        " WHERE sl.child_id=? AND sl.session_date BETWEEN ? AND ?"
+        " GROUP BY sl.session_date",
+        (child_id, first, last)
+    ) or []
+
+    # Subjects touched on each day, so a cell can show what kind of day it was
+    subjects = qry(
+        "SELECT sl.session_date, s.slug, s.label"
+        "  FROM dbo.SessionLogs sl"
+        "  JOIN dbo.Subjects s ON sl.subject_id = s.subject_id"
+        " WHERE sl.child_id=? AND sl.session_date BETWEEN ? AND ?"
+        " GROUP BY sl.session_date, s.slug, s.label",
+        (child_id, first, last)
+    ) or []
+
+    # Assignments land on two different days: the day they were set and the day
+    # they were finished. A parent wants both — one is a plan, the other is a
+    # fact — so they are counted separately rather than merged.
+    assigned = qry(
+        "SELECT CAST(a.assigned_at AS DATE) AS d, COUNT(*) AS n"
+        "  FROM dbo.StudentAssignments a"
+        " WHERE a.child_id=? AND CAST(a.assigned_at AS DATE) BETWEEN ? AND ?"
+        " GROUP BY CAST(a.assigned_at AS DATE)",
+        (child_id, first, last)
+    ) or []
+    completed = qry(
+        "SELECT CAST(a.completed_at AS DATE) AS d, COUNT(*) AS n"
+        "  FROM dbo.StudentAssignments a"
+        " WHERE a.child_id=? AND a.completed_at IS NOT NULL"
+        "   AND CAST(a.completed_at AS DATE) BETWEEN ? AND ?"
+        " GROUP BY CAST(a.completed_at AS DATE)",
+        (child_id, first, last)
+    ) or []
+
+    by_day = {}
+    for r in sessions:
+        by_day.setdefault(str(r["session_date"]), {})["minutes"] = int(r["minutes"] or 0)
+        by_day[str(r["session_date"])]["sessions"] = int(r["sessions"] or 0)
+    for r in subjects:
+        by_day.setdefault(str(r["session_date"]), {}).setdefault("subjects", []).append(r["slug"])
+    for r in assigned:
+        by_day.setdefault(str(r["d"]), {})["assigned"] = int(r["n"] or 0)
+    for r in completed:
+        by_day.setdefault(str(r["d"]), {})["completed"] = int(r["n"] or 0)
+
+    days, cursor = [], first
+    while cursor <= last:
+        key = str(cursor)
+        d = by_day.get(key, {})
+        days.append({
+            "date":      key,
+            "minutes":   d.get("minutes", 0),
+            "sessions":  d.get("sessions", 0),
+            "subjects":  d.get("subjects", []),
+            "assigned":  d.get("assigned", 0),
+            "completed": d.get("completed", 0),
+        })
+        cursor += timedelta(days=1)
+
+    streak = qry(
+        "SELECT current_streak, longest_streak, last_active"
+        "  FROM dbo.Streaks WHERE child_id=?",
+        (child_id,), fetch="one"
+    ) or {"current_streak": 0, "longest_streak": 0, "last_active": None}
+
+    active = [d for d in days if d["sessions"] or d["completed"]]
+    return jsonify({
+        "month": "%04d-%02d" % (first.year, first.month),
+        "days": days,
+        "totals": {
+            "days_active": len(active),
+            "minutes":     sum(d["minutes"] for d in days),
+            "sessions":    sum(d["sessions"] for d in days),
+            "completed":   sum(d["completed"] for d in days),
+        },
+        "streak": streak,
+    })
+
+
 @progress_bp.get("/<int:child_id>/badges")
 @require_auth
 def badges(child_id):

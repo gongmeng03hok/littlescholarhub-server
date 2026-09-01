@@ -1,4 +1,4 @@
--- 72_wisdom_and_story_art.sql
+﻿-- 72_wisdom_and_story_art.sql
 -- Pairs a glossy 3D illustration with every daily-wisdom line and with the
 -- eight published stories that still had no picture.
 --
