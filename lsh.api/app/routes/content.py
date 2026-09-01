@@ -449,8 +449,7 @@ def list_worksheets():
     rows = qry(sql, params)
     if rows:
         for r in rows:
-            if not r.get("pdf_url") and r.get("pdf_generator_key"):
-                r["pdf_url"] = request.url_root.rstrip("/") + f"/api/content/worksheets/{r['worksheet_id']}/pdf"
+            _decorate_worksheet(r)
         return jsonify(rows)
 
     # Dev-mode fallback filtering over the static seed mirror
