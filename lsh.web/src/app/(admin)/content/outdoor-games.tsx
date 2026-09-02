@@ -66,7 +66,10 @@ export default function AdminOutdoorGames() {
             {shown.map((game, i) => (
               <View key={`${game.grade_id}-${i}`} style={s.card}>
                 <View style={s.cardHeader}>
-                  <Text style={s.gradeBadge}>{game.grade_label}</Text>
+                  <View style={{ flexDirection: "row", gap: 6 }}>
+                    <Text style={s.gradeBadge}>{game.grade_label}</Text>
+                    {!!game.players && <Text style={s.playersBadge}>👥 {game.players}</Text>}
+                  </View>
                   <Text style={s.gameName}>{game.name}</Text>
                 </View>
                 {!!game.inspiration && (
@@ -125,6 +128,10 @@ const s = StyleSheet.create({
   gradeBadge: {
     alignSelf: "flex-start", fontSize: 10.5, fontWeight: "800", color: "white",
     backgroundColor: colors.brand, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, marginBottom: 6,
+  },
+  playersBadge: {
+    alignSelf: "flex-start", fontSize: 10.5, fontWeight: "800", color: colors.brand,
+    backgroundColor: colors.brandLight, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, marginBottom: 6,
   },
   gameName: { fontSize: 15.5, fontWeight: "800", color: colors.text },
   objective: { fontSize: 12.5, color: colors.textMuted, fontStyle: "italic", marginTop: 4, marginBottom: 10, lineHeight: 18 },

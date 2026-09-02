@@ -41,6 +41,7 @@ export interface OutdoorGame {
   // — empty string for games from earlier batches without this line.
   inspiration: string;
   objective: string;
+  players: string;
   materials: string[];
   steps: string[];
   safety_tip: string;
