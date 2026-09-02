@@ -76,6 +76,9 @@ export default function AdminOutdoorGames() {
                   <Text style={s.inspiration}>🕹️ {game.inspiration}</Text>
                 )}
                 <Text style={s.objective}>{game.objective}</Text>
+                {!!game.prerequisites && (
+                  <Text style={s.prerequisites}>🔓 Before you start: {game.prerequisites}</Text>
+                )}
 
                 <Text style={s.sectionLabel}>Materials</Text>
                 {game.materials.map((m, mi) => (
@@ -135,6 +138,7 @@ const s = StyleSheet.create({
   },
   gameName: { fontSize: 15.5, fontWeight: "800", color: colors.text },
   objective: { fontSize: 12.5, color: colors.textMuted, fontStyle: "italic", marginTop: 4, marginBottom: 10, lineHeight: 18 },
+  prerequisites: { fontSize: 11.5, color: "#1b5a8a", backgroundColor: "#e6f0fa", borderRadius: 6, padding: 6, marginTop: -4, marginBottom: 10, lineHeight: 16 },
 
   sectionLabel: { fontSize: 11, fontWeight: "800", color: colors.brand, textTransform: "uppercase", marginTop: 6, marginBottom: 4 },
   listItem: { fontSize: 12.5, color: colors.text, lineHeight: 19 },

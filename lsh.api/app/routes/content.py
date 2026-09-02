@@ -639,18 +639,22 @@ def outdoor_games_library():
         fetch="all"
     )
 
+    inspiration_re = re.compile(r"^\d0s Inspiration:")
+
     games = []
     for r in rows:
         parts = (r["prompt"] or "").split("\n\n")
         name = parts[0].strip() if parts else ""
-        inspiration, objective, materials, players = "", "", [], ""
+        inspiration, objective, materials, players, prerequisites = "", "", [], "", ""
         for part in parts[1:]:
-            if part.startswith("80s Inspiration:"):
-                inspiration = part[len("80s Inspiration:"):].strip()
+            if inspiration_re.match(part):
+                inspiration = part[part.index(":") + 1:].strip()
             elif part.startswith("Objective:"):
                 objective = part[len("Objective:"):].strip()
             elif part.startswith("Players:"):
                 players = part[len("Players:"):].strip()
+            elif part.startswith("Prerequisites:"):
+                prerequisites = part[len("Prerequisites:"):].strip()
             elif part.startswith("Materials:"):
                 materials = [m.strip() for m in part[len("Materials:"):].strip().split(" | ") if m.strip()]
 
@@ -668,6 +672,7 @@ def outdoor_games_library():
             "inspiration": inspiration,
             "objective": objective,
             "players": players,
+            "prerequisites": prerequisites,
             "materials": materials,
             "steps": steps,
             "safety_tip": r["answer_text"],

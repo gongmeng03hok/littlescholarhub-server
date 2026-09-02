@@ -42,6 +42,7 @@ export interface OutdoorGame {
   inspiration: string;
   objective: string;
   players: string;
+  prerequisites: string;
   materials: string[];
   steps: string[];
   safety_tip: string;
