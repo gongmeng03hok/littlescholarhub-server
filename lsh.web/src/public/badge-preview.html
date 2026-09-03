@@ -6,7 +6,7 @@
 <!-- Internal review page. Kept out of the index so it never competes with the
      real topic pages in search. -->
 <meta name="robots" content="noindex, nofollow">
-<title>Badge art review — Little Scholars Hub</title>
+<title>Space badge review — Little Scholars Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -41,6 +41,7 @@
   .lab { font-family: Fredoka, sans-serif; font-weight: 700; font-size: 14px; }
   .slug { color: var(--muted); font-size: 11px; margin-top: 3px; word-break: break-all; }
   .meta { color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .motif { color: #cbbdf0; font-size: 11px; margin-top: 5px; font-style: italic; }
   .emoji { font-size: 15px; }
   footer {
     max-width: 1080px; margin: 40px auto 0; color: var(--muted);
@@ -55,11 +56,13 @@
 </head>
 <body>
 <header>
-  <h1>Badge art review</h1>
+  <h1>Space badges &mdash; mission patches</h1>
   <p class="lede">
-    All 21 badges at roughly the size a child sees them on the home screen.
-    Tier colour comes from each badge's XP value, so bronze, silver and gold
-    should read as a progression. Tell me which ones miss and I'll redraw them.
+    All 21 rebuilt on the NASA mission-patch model: a circle, a deep-space
+    field, stitched edge, and one symbol that belongs to that badge and no
+    other. Ring colour still carries the tier, so bronze &rarr; silver &rarr;
+    gold reads as progression. Shown at roughly the size a child sees on the
+    home screen &mdash; tell me which motifs miss and I'll redraw those.
   </p>
 </header>
 
@@ -80,30 +83,30 @@
 
 <script>
 const BADGES = [
-  ["first_sheet",             "First Worksheet!",  "\u{1F4C4}", 10],
-  ["first_worksheet",         "First Steps",       "\u{1F463}", 10],
-  ["first_mini_book",         "Bookworm",          "\u{1F4D6}", 10],
-  ["homework_1st_scan",       "First Scan!",       "\u{1F4F8}", 10],
-  ["first_culture_worksheet", "Culture Explorer",  "\u{1F30D}", 15],
-  ["first_language_switch",   "Polyglot",          "\u{1F4AC}", 15],
-  ["streak_3",                "3-Day Streak",      "\u{1F525}", 15],
-  ["level_5",                 "Rising Star",       "\u{2B50}",  15],
-  ["speed_star",              "Speed Star",        "\u{26A1}",  20],
-  ["xp_100",                  "100 XP Club",       "\u{1F537}", 20],
-  ["homework_5_scans",        "Scan Streak",       "\u{1F4F7}", 25],
-  ["perfect_day",             "Perfect Day",       "\u{2705}",  25],
-  ["drill_master",            "Drill Master",      "\u{1F3AF}", 30],
-  ["level_10",                "Super Scholar",     "\u{1F31F}", 30],
-  ["streak_7",                "7-Day Streak",      "\u{1F525}", 35],
-  ["homework_10_scans",       "Homework Hero",     "\u{1F9B8}", 40],
-  ["topic_mastered",          "Topic Mastered",    "\u{26F0}",  40],
-  ["xp_1000",                 "XP Champion",       "\u{1F48E}", 40],
-  ["streak_30",               "Unstoppable",       "\u{1F3C6}", 50],
-  ["week_warrior",            "Week Warrior",      "\u{1F4C5}", 50],
-  ["xp_500",                  "500 XP Legend",     "\u{1F4A0}", 50],
+  ["first_sheet",             "First Worksheet!",  "\u{1F680}", 10, "rocket lifting off"],
+  ["first_worksheet",         "First Steps",       "\u{1F463}", 10, "boot print on the moon"],
+  ["first_mini_book",         "Bookworm",          "\u{1F5FA}", 10, "star map"],
+  ["homework_1st_scan",       "First Scan!",       "\u{1F52D}", 10, "telescope"],
+  ["first_culture_worksheet", "Culture Explorer",  "\u{1FA90}", 15, "ringed planet"],
+  ["first_language_switch",   "Polyglot",          "\u{1F47D}", 15, "alien waving"],
+  ["streak_3",                "3-Day Streak",      "\u{1F525}", 15, "rocket, 2 flames"],
+  ["level_5",                 "Rising Star",       "\u{2B50}",  15, "astronaut helmet"],
+  ["speed_star",              "Speed Star",        "\u{2604}",  20, "comet"],
+  ["xp_100",                  "100 XP Club",       "\u{2728}", 20, "single star"],
+  ["homework_5_scans",        "Scan Streak",       "\u{1F6F0}", 25, "satellite"],
+  ["perfect_day",             "Perfect Day",       "\u{2600}",  25, "smiling sun"],
+  ["drill_master",            "Drill Master",      "\u{1F3AF}", 30, "asteroid in crosshairs"],
+  ["level_10",                "Super Scholar",     "\u{1F31F}", 30, "astronaut floating"],
+  ["streak_7",                "7-Day Streak",      "\u{1F525}", 35, "rocket, 3 flames"],
+  ["homework_10_scans",       "Homework Hero",     "\u{1F6F8}", 40, "space station"],
+  ["topic_mastered",          "Topic Mastered",    "\u{1F6A9}",  40, "flag planted on a planet"],
+  ["xp_1000",                 "XP Champion",       "\u{1F4AB}", 40, "supernova"],
+  ["streak_30",               "Unstoppable",       "\u{1F30C}", 50, "spiral galaxy"],
+  ["week_warrior",            "Week Warrior",      "\u{1F30E}", 50, "orbit paths"],
+  ["xp_500",                  "500 XP Legend",     "\u{1F320}", 50, "star cluster"],
 ];
 
-for (const [slug, label, emoji, xp] of BADGES) {
+for (const [slug, label, emoji, xp, motif] of BADGES) {
   const bucket = xp <= 15 ? "bronze" : xp <= 30 ? "silver" : "gold";
   const el = document.createElement("div");
   el.className = "b";
@@ -111,7 +114,8 @@ for (const [slug, label, emoji, xp] of BADGES) {
     '<img src="/art/badge_' + slug + '.svg" alt="' + label + '" loading="lazy">' +
     '<div class="lab">' + label + '</div>' +
     '<div class="slug">' + slug + '</div>' +
-    '<div class="meta"><span class="emoji">' + emoji + '</span> &middot; ' + xp + ' XP</div>';
+    '<div class="meta"><span class="emoji">' + emoji + '</span> &middot; ' + xp + ' XP</div>' +
+    '<div class="motif">' + motif + '</div>';
   document.getElementById(bucket).appendChild(el);
 }
 </script>
